@@ -2,3 +2,4 @@
 nul
 node_modules/
 nul
+.env.local
