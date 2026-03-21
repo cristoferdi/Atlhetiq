@@ -42,6 +42,7 @@ export const mockWorkoutData: WorkoutData = {
           reps: "8 - 10",
           rest: "90s",
           media_url: "https://media.giphy.com/media/3o7btPCcdNniyf0ArS/giphy.gif",
+          video_url: "https://www.youtube.com/watch?v=rvsg5V3C4kY",
           instructions: [
             "Acuéstate plano sobre el banco con los pies apoyados en el suelo.",
             "Agarra la barra con las manos ligeramente más anchas que los hombros.",
@@ -56,12 +57,22 @@ export const mockWorkoutData: WorkoutData = {
           reps: "12 - 15",
           rest: "60s",
           media_url: "https://media.giphy.com/media/xT9IgzoKnwFNmISR8I/giphy.gif",
+          video_url: "https://vimeo.com/123456789",
           instructions: [
             "Párate frente a la polea alta y agarra la cuerda.",
             "Mantén los codos pegados a las costillas.",
             "Extiende los brazos hacia abajo separando la cuerda al final.",
             "Sube controlando el peso hasta que los antebrazos estén paralelos al suelo."
           ]
+        },
+        {
+          id: "ex_003",
+          name: "Ejercicio sin video",
+          sets: "3",
+          reps: "15",
+          rest: "45s",
+          media_url: "https://media.giphy.com/media/l0HlNQ03J5JxX6lva/giphy.gif",
+          instructions: []
         }
       ]
     },

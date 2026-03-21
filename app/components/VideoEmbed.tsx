@@ -1,0 +1,100 @@
+'use client'
+
+import { useState } from 'react'
+import { parseVideoUrl, getPlatformName, VideoPlatform } from '../utils/videoUtils'
+
+interface VideoEmbedProps {
+  videoUrl?: string
+  mediaUrl: string
+  alt?: string
+}
+
+export default function VideoEmbed({ videoUrl, mediaUrl, alt = 'Video ejercicio' }: VideoEmbedProps) {
+  const [showVideo, setShowVideo] = useState(false)
+  
+  const parsed = parseVideoUrl(videoUrl)
+
+  if (!parsed.isEmbeddable || !parsed.embedUrl) {
+    return (
+      <div className="w-full bg-gray-50 rounded-xl overflow-hidden flex justify-center">
+        <img
+          src={mediaUrl}
+          alt={alt}
+          className="max-w-full h-auto"
+          style={{ maxHeight: '300px' }}
+          onError={(e) => {
+            const target = e.target as HTMLImageElement
+            target.src = `https://via.placeholder.com/400x225/F3F4F6/9CA3AF?text=${encodeURIComponent(alt)}`
+          }}
+        />
+      </div>
+    )
+  }
+
+  return (
+    <div className="w-full">
+      {!showVideo ? (
+        <div className="relative w-full bg-gray-50 rounded-xl overflow-hidden flex justify-center">
+          <img
+            src={mediaUrl}
+            alt={alt}
+            className="max-w-full h-auto cursor-pointer"
+            style={{ maxHeight: '300px' }}
+            onClick={() => setShowVideo(true)}
+            onError={(e) => {
+              const target = e.target as HTMLImageElement
+              target.src = `https://via.placeholder.com/400x225/F3F4F6/9CA3AF?text=${encodeURIComponent(alt)}`
+            }}
+          />
+          <button
+            onClick={() => setShowVideo(true)}
+            className="absolute inset-0 flex items-center justify-center bg-black/20 hover:bg-black/30 transition-colors"
+          >
+            <div className="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
+              <svg className="w-8 h-8 text-gray-800 ml-1" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            </div>
+          </button>
+          <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+            {getPlatformName(parsed.platform)}
+          </div>
+        </div>
+      ) : (
+        <div className="relative w-full bg-black rounded-xl overflow-hidden" style={{ paddingTop: '56.25%' }}>
+          <iframe
+            src={`${parsed.embedUrl}?autoplay=1`}
+            title={alt}
+            className="absolute top-0 left-0 w-full h-full"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        </div>
+      )}
+    </div>
+  )
+}
+
+interface VideoLinkProps {
+  videoUrl?: string
+}
+
+export function VideoLink({ videoUrl }: VideoLinkProps) {
+  if (!videoUrl) return null
+
+  const parsed = parseVideoUrl(videoUrl)
+
+  return (
+    <a
+      href={videoUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors text-sm font-medium text-gray-700"
+    >
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+      </svg>
+      Ver video en {getPlatformName(parsed.platform)}
+    </a>
+  )
+}

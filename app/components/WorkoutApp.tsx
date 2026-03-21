@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { getRutina, getAllRoutines } from '../../lib/firebase'
 import { Exercise, WorkoutDay, WorkoutData } from '../data/mockData'
+import VideoEmbed, { VideoLink } from './VideoEmbed'
 
 function ExerciseCard({ exercise, index, onClick }: { exercise: Exercise; index: number; onClick: () => void }) {
   return (
@@ -21,16 +22,11 @@ function ExerciseCard({ exercise, index, onClick }: { exercise: Exercise; index:
           </svg>
         </div>
         
-        <div className="w-full bg-gray-50 rounded-xl overflow-hidden mb-3 flex justify-center">
-          <img
-            src={exercise.media_url}
+        <div className="mb-3">
+          <VideoEmbed 
+            videoUrl={exercise.video_url} 
+            mediaUrl={exercise.media_url} 
             alt={exercise.name}
-            className="max-w-full h-auto"
-            style={{ maxHeight: '300px' }}
-            onError={(e) => {
-              const target = e.target as HTMLImageElement
-              target.src = `https://via.placeholder.com/400x225/F3F4F6/9CA3AF?text=${encodeURIComponent(exercise.name)}`
-            }}
           />
         </div>
         
@@ -74,18 +70,19 @@ function InstructionsModal({ exercise, onClose }: { exercise: Exercise; onClose:
             </button>
           </div>
           
-          <div className="w-full bg-gray-50 rounded-xl overflow-hidden mb-4 flex justify-center">
-            <img
-              src={exercise.media_url}
+          <div className="mb-4">
+            <VideoEmbed 
+              videoUrl={exercise.video_url} 
+              mediaUrl={exercise.media_url} 
               alt={exercise.name}
-              className="max-w-full h-auto"
-              style={{ maxHeight: '400px' }}
-              onError={(e) => {
-                const target = e.target as HTMLImageElement
-                target.src = `https://via.placeholder.com/400x225/F3F4F6/9CA3AF?text=${encodeURIComponent(exercise.name)}`
-              }}
             />
           </div>
+          
+          {exercise.video_url && (
+            <div className="mb-4">
+              <VideoLink videoUrl={exercise.video_url} />
+            </div>
+          )}
           
           <div className="flex gap-2 mb-4">
             <div className="flex-1 bg-blue-50 rounded-lg p-2 text-center">
