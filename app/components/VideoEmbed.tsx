@@ -19,23 +19,24 @@ interface VideoEmbedProps {
   videoUrl?: string
   mediaUrl: string
   alt?: string
+  showPlayButton?: boolean
 }
 
-export default function VideoEmbed({ videoUrl, mediaUrl, alt = 'Video ejercicio' }: VideoEmbedProps) {
+export default function VideoEmbed({ videoUrl, mediaUrl, alt = 'Video ejercicio', showPlayButton = true }: VideoEmbedProps) {
   const [showVideo, setShowVideo] = useState(false)
   
-  console.log('[VideoEmbed] Props:', { videoUrl, mediaUrl, alt })
+  console.log('[VideoEmbed] Props:', { videoUrl, mediaUrl, alt, showPlayButton })
   const parsed = parseVideoUrl(videoUrl)
   console.log('[VideoEmbed] Parsed video:', parsed)
 
-  // 2. Efecto aislado para inicializar Instagram cuando se muestra el video
+  // Efecto para inicializar Instagram cuando se muestra el video
   useEffect(() => {
-
     if (showVideo && parsed.platform === 'instagram' && window.instgrm) {
       window.instgrm.Embeds.process()
     }
   }, [showVideo, parsed.platform])
 
+  // Si no es embebible o no hay URL de video, mostrar solo el GIF
   if (!parsed.isEmbeddable || !parsed.embedUrl) {
     console.log('[VideoEmbed] No embebible, mostrando GIF')
     return (
@@ -55,7 +56,7 @@ export default function VideoEmbed({ videoUrl, mediaUrl, alt = 'Video ejercicio'
     )
   }
 
-  // 3. Función para renderizar el reproductor correcto sin romper otras plataformas
+  // Función para renderizar el reproductor
   const renderPlayer = () => {
     if (parsed.platform === 'instagram') {
       return (
@@ -64,15 +65,19 @@ export default function VideoEmbed({ videoUrl, mediaUrl, alt = 'Video ejercicio'
             className="instagram-media"
             data-instgrm-permalink={`https://www.instagram.com/p/${parsed.videoId}/`}
             data-instgrm-version="14"
-            style={{ background: '#FFF', border: 0, margin: 1, maxWidth: '540px', minWidth: '326px', width: 'calc(100% - 2px)' }}
+            style={{ background: '#FFF', border: 0, margin: 1, maxWidth: '540px', minWidth: '326px', width: 'calc(100% - 2px)', height: '600px' }}
           />
         </div>
       )
     }
 
-    // Para YouTube, Vimeo, TikTok, Facebook (Mantiene tu lógica original con iframe y autoplay)
+    const isVertical = parsed.platform === 'tiktok' || 
+                       parsed.platform === 'facebook' || 
+                       parsed.embedUrl?.includes('shorts')
+    const aspectRatio = isVertical ? '177.78%' : '56.25%'
+
     return (
-      <div className="relative w-full bg-black rounded-xl overflow-hidden" style={{ paddingTop: '56.25%' }}>
+      <div className="relative w-full bg-black rounded-xl overflow-hidden" style={{ paddingTop: aspectRatio }}>
         <iframe
           src={`${parsed.embedUrl}?autoplay=1`}
           title={alt}
@@ -84,9 +89,26 @@ export default function VideoEmbed({ videoUrl, mediaUrl, alt = 'Video ejercicio'
     )
   }
 
+  // Si showPlayButton es false, mostrar solo el GIF limpio
+  if (!showPlayButton) {
+    return (
+      <div className="w-full bg-gray-50 rounded-xl overflow-hidden flex justify-center">
+        <img
+          src={mediaUrl}
+          alt={alt}
+          className="max-w-full h-auto"
+          style={{ maxHeight: '300px' }}
+          onError={(e) => {
+            const target = e.target as HTMLImageElement
+            target.src = `https://via.placeholder.com/400x225/F3F4F6/9CA3AF?text=${encodeURIComponent(alt)}`
+          }}
+        />
+      </div>
+    )
+  }
+
   return (
     <div className="w-full">
-      {/* Script de Instagram: solo se inyecta si el video es de Instagram */}
       {parsed.platform === 'instagram' && (
         <Script async src="//www.instagram.com/embed.js" strategy="lazyOnload" />
       )}

@@ -27,6 +27,7 @@ function ExerciseCard({ exercise, index, onClick }: { exercise: Exercise; index:
             videoUrl={exercise.video_url} 
             mediaUrl={exercise.media_url} 
             alt={exercise.name}
+            showPlayButton={false}
           />
         </div>
         
