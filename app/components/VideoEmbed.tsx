@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { parseVideoUrl, getPlatformName, VideoPlatform } from '../utils/videoUtils'
+import { parseVideoUrl, getPlatformName } from '../utils/videoUtils'
 
 interface VideoEmbedProps {
   videoUrl?: string
@@ -12,9 +12,12 @@ interface VideoEmbedProps {
 export default function VideoEmbed({ videoUrl, mediaUrl, alt = 'Video ejercicio' }: VideoEmbedProps) {
   const [showVideo, setShowVideo] = useState(false)
   
+  console.log('[VideoEmbed] Props:', { videoUrl, mediaUrl, alt })
   const parsed = parseVideoUrl(videoUrl)
+  console.log('[VideoEmbed] Parsed video:', parsed)
 
   if (!parsed.isEmbeddable || !parsed.embedUrl) {
+    console.log('[VideoEmbed] No embebible, mostrando GIF')
     return (
       <div className="w-full bg-gray-50 rounded-xl overflow-hidden flex justify-center">
         <img
@@ -23,6 +26,7 @@ export default function VideoEmbed({ videoUrl, mediaUrl, alt = 'Video ejercicio'
           className="max-w-full h-auto"
           style={{ maxHeight: '300px' }}
           onError={(e) => {
+            console.log('[VideoEmbed] Error cargando imagen, usando placeholder')
             const target = e.target as HTMLImageElement
             target.src = `https://via.placeholder.com/400x225/F3F4F6/9CA3AF?text=${encodeURIComponent(alt)}`
           }}
@@ -31,6 +35,7 @@ export default function VideoEmbed({ videoUrl, mediaUrl, alt = 'Video ejercicio'
     )
   }
 
+  console.log('[VideoEmbed] Es embebible, mostrando con play button')
   return (
     <div className="w-full">
       {!showVideo ? (
@@ -40,14 +45,20 @@ export default function VideoEmbed({ videoUrl, mediaUrl, alt = 'Video ejercicio'
             alt={alt}
             className="max-w-full h-auto cursor-pointer"
             style={{ maxHeight: '300px' }}
-            onClick={() => setShowVideo(true)}
+            onClick={() => {
+              console.log('[VideoEmbed] Click en imagen, mostrando video')
+              setShowVideo(true)
+            }}
             onError={(e) => {
               const target = e.target as HTMLImageElement
               target.src = `https://via.placeholder.com/400x225/F3F4F6/9CA3AF?text=${encodeURIComponent(alt)}`
             }}
           />
           <button
-            onClick={() => setShowVideo(true)}
+            onClick={() => {
+              console.log('[VideoEmbed] Click en boton play')
+              setShowVideo(true)
+            }}
             className="absolute inset-0 flex items-center justify-center bg-black/20 hover:bg-black/30 transition-colors"
           >
             <div className="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
@@ -80,9 +91,15 @@ interface VideoLinkProps {
 }
 
 export function VideoLink({ videoUrl }: VideoLinkProps) {
-  if (!videoUrl) return null
+  console.log('[VideoLink] Renderizando con videoUrl:', videoUrl)
+  
+  if (!videoUrl) {
+    console.log('[VideoLink] No hay videoUrl, no se muestra enlace')
+    return null
+  }
 
   const parsed = parseVideoUrl(videoUrl)
+  console.log('[VideoLink] Plataforma detectada:', parsed.platform)
 
   return (
     <a

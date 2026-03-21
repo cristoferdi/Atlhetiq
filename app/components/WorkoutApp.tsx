@@ -138,26 +138,37 @@ export default function WorkoutApp({ routineId }: { routineId: string }) {
   useEffect(() => {
     async function fetchRutina() {
       try {
+        console.log('[WorkoutApp] Fetching rutina con ID:', routineId)
         let rutina = await getRutina(routineId)
+        console.log('[WorkoutApp] Resultado de getRutina:', rutina)
         
         if (!rutina) {
+          console.log('[WorkoutApp] No se encontró rutina, buscando todas...')
           const allRoutines = await getAllRoutines()
+          console.log('[WorkoutApp] Todas las rutinas:', allRoutines)
           if (allRoutines.length > 0) {
             rutina = allRoutines[0]
           }
         }
         
         if (rutina) {
+          console.log('[WorkoutApp] Datos de rutina:', {
+            coachName: (rutina as any).coachName,
+            clientName: (rutina as any).clientName,
+            daysCount: (rutina as any).routine?.length,
+            exercisesCount: (rutina as any).routine?.[0]?.exercises?.length
+          })
           setData(rutina as unknown as FirestoreRoutine)
           if ((rutina as unknown as FirestoreRoutine).routine.length > 0) {
             setSelectedDay((rutina as unknown as FirestoreRoutine).routine[0])
           }
         } else {
+          console.log('[WorkoutApp] Rutina no encontrada')
           setError('Rutina no encontrada')
         }
       } catch (err) {
         setError('Error al cargar la rutina')
-        console.error(err)
+        console.error('[WorkoutApp] Error:', err)
       } finally {
         setLoading(false)
       }
