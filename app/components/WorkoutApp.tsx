@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { getRutina, getAllRoutines } from '../../lib/firebase'
+import { getRutina } from '../../lib/firebase'
 import { Exercise, WorkoutDay, WorkoutData } from '../data/mockData'
 import VideoEmbed, { VideoLink } from './VideoEmbed'
 
@@ -140,17 +140,8 @@ export default function WorkoutApp({ routineId }: { routineId: string }) {
     async function fetchRutina() {
       try {
         console.log('[WorkoutApp] Fetching rutina con ID:', routineId)
-        let rutina = await getRutina(routineId)
+        const rutina = await getRutina(routineId)
         console.log('[WorkoutApp] Resultado de getRutina:', rutina)
-        
-        if (!rutina) {
-          console.log('[WorkoutApp] No se encontró rutina, buscando todas...')
-          const allRoutines = await getAllRoutines()
-          console.log('[WorkoutApp] Todas las rutinas:', allRoutines)
-          if (allRoutines.length > 0) {
-            rutina = allRoutines[0]
-          }
-        }
         
         if (rutina) {
           console.log('[WorkoutApp] Datos de rutina:', {
