@@ -1,11 +1,12 @@
 export interface Exercise {
   id: string
   name: string
-  sets: number
+  sets: string
   reps: string
-  rest: string
+  rest?: string
   media_url: string
-  instructions: string[]
+  video_url?: string
+  instructions?: string[]
 }
 
 export interface WorkoutDay {
@@ -15,24 +16,20 @@ export interface WorkoutDay {
 }
 
 export interface WorkoutData {
-  coach: {
-    name: string
-  }
-  client: {
-    name: string
-    goal: string
-  }
+  id: string
+  coachName: string
+  clientName: string
+  clientGoal?: string
+  routineTitle: string
   routine: WorkoutDay[]
 }
 
 export const mockWorkoutData: WorkoutData = {
-  coach: {
-    name: "Alex Fitness"
-  },
-  client: {
-    name: "Juan Pérez",
-    goal: "Aumento de Masa Muscular"
-  },
+  id: "mock-rutina-001",
+  coachName: "Alex Fitness",
+  clientName: "Juan Pérez",
+  clientGoal: "Aumento de Masa Muscular",
+  routineTitle: "Rutina de Fuerza",
   routine: [
     {
       day_id: "d1",
@@ -41,7 +38,7 @@ export const mockWorkoutData: WorkoutData = {
         {
           id: "ex_001",
           name: "Press de Banca con Barra",
-          sets: 4,
+          sets: "4",
           reps: "8 - 10",
           rest: "90s",
           media_url: "https://media.giphy.com/media/3o7btPCcdNniyf0ArS/giphy.gif",
@@ -55,7 +52,7 @@ export const mockWorkoutData: WorkoutData = {
         {
           id: "ex_002",
           name: "Extensión de Tríceps en Polea",
-          sets: 3,
+          sets: "3",
           reps: "12 - 15",
           rest: "60s",
           media_url: "https://media.giphy.com/media/xT9IgzoKnwFNmISR8I/giphy.gif",

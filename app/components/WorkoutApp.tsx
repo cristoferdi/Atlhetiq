@@ -45,7 +45,7 @@ function ExerciseCard({ exercise, index, onClick }: { exercise: Exercise; index:
           </div>
           <div className="flex-1 bg-amber-50 rounded-lg p-2 text-center">
             <p className="text-xs text-amber-600 font-medium uppercase">Descanso</p>
-            <p className="text-lg font-bold text-amber-700">{exercise.rest}</p>
+            <p className="text-lg font-bold text-amber-700">{exercise.rest || '-'}</p>
           </div>
         </div>
       </div>
@@ -98,13 +98,13 @@ function InstructionsModal({ exercise, onClose }: { exercise: Exercise; onClose:
             </div>
             <div className="flex-1 bg-amber-50 rounded-lg p-2 text-center">
               <p className="text-xs text-amber-600 font-medium uppercase">Descanso</p>
-              <p className="text-lg font-bold text-amber-700">{exercise.rest}</p>
+              <p className="text-lg font-bold text-amber-700">{exercise.rest || '-'}</p>
             </div>
           </div>
 
           <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">Instrucciones</h3>
           <div className="space-y-3 pb-4">
-            {exercise.instructions.map((instruction, index) => (
+            {exercise.instructions && exercise.instructions.map((instruction, index) => (
               <div key={index} className="flex gap-3">
                 <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 text-blue-600 text-sm font-medium flex items-center justify-center">
                   {index + 1}
@@ -112,6 +112,9 @@ function InstructionsModal({ exercise, onClose }: { exercise: Exercise; onClose:
                 <p className="text-gray-600 text-sm leading-relaxed">{instruction}</p>
               </div>
             ))}
+            {(!exercise.instructions || exercise.instructions.length === 0) && (
+              <p className="text-gray-400 text-sm">No hay instrucciones disponibles</p>
+            )}
           </div>
         </div>
       </div>
@@ -120,8 +123,11 @@ function InstructionsModal({ exercise, onClose }: { exercise: Exercise; onClose:
 }
 
 interface FirestoreRoutine {
-  coach: { name: string }
-  client: { name: string; goal: string }
+  id: string
+  coachName: string
+  clientName: string
+  clientGoal?: string
+  routineTitle: string
   routine: WorkoutDay[]
 }
 
@@ -184,7 +190,7 @@ export default function WorkoutApp({ routineId }: { routineId: string }) {
     )
   }
 
-  const { coach, client, routine } = data
+  const { coachName, clientName, clientGoal, routine } = data
 
   return (
     <div className="min-h-screen bg-gray-50 pb-8">
@@ -199,21 +205,21 @@ export default function WorkoutApp({ routineId }: { routineId: string }) {
               </div>
               <div>
                 <p className="text-xs text-gray-500 font-medium">Entrenador</p>
-                <p className="text-sm font-semibold text-gray-800">{coach.name}</p>
+                <p className="text-sm font-semibold text-gray-800">{coachName}</p>
               </div>
             </div>
           </div>
           
           <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-4">
             <p className="text-white/80 text-xs font-medium mb-1">Alumno</p>
-            <p className="text-white font-bold text-lg">{client.name}</p>
+            <p className="text-white font-bold text-lg">{clientName}</p>
             <div className="flex items-center gap-2 mt-2">
               <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center">
                 <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </span>
-              <span className="text-white/90 text-sm">{client.goal}</span>
+              <span className="text-white/90 text-sm">{clientGoal}</span>
             </div>
           </div>
         </div>
