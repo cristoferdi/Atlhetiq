@@ -36,6 +36,25 @@ export default function VideoEmbed({ videoUrl, mediaUrl, alt = 'Video ejercicio'
   }
 
   console.log('[VideoEmbed] Es embebible, mostrando con play button')
+  
+  if (parsed.platform === 'instagram') {
+    console.log('[VideoEmbed] Renderizando Instagram embed')
+    return (
+      <div className="w-full bg-gray-50 rounded-xl overflow-hidden flex justify-center">
+        <iframe
+          src={parsed.embedUrl}
+          width="400"
+          height="480"
+          frameBorder="0"
+          scrolling="no"
+          allowTransparency={true}
+          allow="encrypted-media"
+          className="rounded-lg max-w-full"
+        />
+      </div>
+    )
+  }
+
   return (
     <div className="w-full">
       {!showVideo ? (

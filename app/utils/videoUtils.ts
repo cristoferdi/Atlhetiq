@@ -90,12 +90,17 @@ export function parseVideoUrl(url: string | undefined): ParsedVideo {
   if (cleanUrl.includes('instagram.com/')) {
     const match = cleanUrl.match(/\/(reel|tv|reels|posts|p)\/([A-Za-z0-9_-]+)/)
     const shortcode = match ? match[2] : null
-    return {
-      platform: 'instagram',
-      videoId: shortcode,
-      embedUrl: null,
-      isEmbeddable: false,
+    
+    if (shortcode) {
+      return {
+        platform: 'instagram',
+        videoId: shortcode,
+        embedUrl: `https://www.instagram.com/p/${shortcode}/embed`,
+        isEmbeddable: true,
+      }
     }
+    
+    return { platform: 'instagram', videoId: null, embedUrl: null, isEmbeddable: false }
   }
 
   return { platform: 'unknown', videoId: null, embedUrl: null, isEmbeddable: false }
