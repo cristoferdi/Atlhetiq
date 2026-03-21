@@ -12,7 +12,7 @@ export function parseVideoUrl(url: string | undefined): ParsedVideo {
     return { platform: 'unknown', videoId: null, embedUrl: null, isEmbeddable: false }
   }
 
-  const cleanUrl = url.trim().toLowerCase()
+  const cleanUrl = url.trim()
 
   if (cleanUrl.includes('youtube.com/watch')) {
     const videoId = extractParam(url, 'v')
@@ -65,20 +65,31 @@ export function parseVideoUrl(url: string | undefined): ParsedVideo {
     }
   }
 
+  if (cleanUrl.includes('facebook.com/reel/')) {
+    const videoId = cleanUrl.split('reel/')[1]?.split('?')[0]
+    return {
+      platform: 'facebook',
+      videoId,
+      embedUrl: videoId ? `https://www.facebook.com/plugins/video.php?href=https://www.facebook.com/reel/${videoId}` : null,
+      isEmbeddable: !!videoId,
+    }
+  }
+
   if (cleanUrl.includes('facebook.com/') || cleanUrl.includes('fb.watch/')) {
-    const videoId = cleanUrl.split('v=')?.[1]?.split('&')[0] || 
+    const videoId = extractParam(cleanUrl, 'v') || 
+                    cleanUrl.split('/v=')?.[1]?.split('&')[0] ||
                     cleanUrl.split('fb.watch/')[1]?.split('?')[0]
     return {
       platform: 'facebook',
       videoId,
-      embedUrl: null,
-      isEmbeddable: false,
+      embedUrl: videoId ? `https://www.facebook.com/plugins/video.php?href=https://www.facebook.com/video.php?v=${videoId}` : null,
+      isEmbeddable: !!videoId,
     }
   }
 
   if (cleanUrl.includes('instagram.com/')) {
-    const parts = cleanUrl.split('instagram.com/')[1]?.split('?')[0]?.split('/')
-    const shortcode = parts?.[parts.length - 1]
+    const match = cleanUrl.match(/\/(reel|tv|reels|posts|p)\/([A-Za-z0-9_-]+)/)
+    const shortcode = match ? match[2] : null
     return {
       platform: 'instagram',
       videoId: shortcode,
