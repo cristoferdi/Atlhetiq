@@ -1,7 +1,19 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import Script from 'next/script'
 import { parseVideoUrl, getPlatformName } from '../utils/videoUtils'
+
+// 1. Le decimos a TypeScript que existe un objeto 'instgrm' en el window global
+declare global {
+  interface Window {
+    instgrm?: {
+      Embeds: {
+        process(): void;
+      };
+    };
+  }
+}
 
 interface VideoEmbedProps {
   videoUrl?: string
@@ -15,6 +27,14 @@ export default function VideoEmbed({ videoUrl, mediaUrl, alt = 'Video ejercicio'
   console.log('[VideoEmbed] Props:', { videoUrl, mediaUrl, alt })
   const parsed = parseVideoUrl(videoUrl)
   console.log('[VideoEmbed] Parsed video:', parsed)
+
+  // 2. Efecto aislado para inicializar Instagram cuando se muestra el video
+  useEffect(() => {
+
+    if (showVideo && parsed.platform === 'instagram' && window.instgrm) {
+      window.instgrm.Embeds.process()
+    }
+  }, [showVideo, parsed.platform])
 
   if (!parsed.isEmbeddable || !parsed.embedUrl) {
     console.log('[VideoEmbed] No embebible, mostrando GIF')
@@ -35,10 +55,42 @@ export default function VideoEmbed({ videoUrl, mediaUrl, alt = 'Video ejercicio'
     )
   }
 
+  // 3. Función para renderizar el reproductor correcto sin romper otras plataformas
+  const renderPlayer = () => {
+    if (parsed.platform === 'instagram') {
+      return (
+        <div className="w-full flex justify-center bg-white rounded-xl overflow-hidden">
+          <blockquote
+            className="instagram-media"
+            data-instgrm-permalink={`https://www.instagram.com/p/${parsed.videoId}/`}
+            data-instgrm-version="14"
+            style={{ background: '#FFF', border: 0, margin: 1, maxWidth: '540px', minWidth: '326px', width: 'calc(100% - 2px)' }}
+          />
+        </div>
+      )
+    }
 
+    // Para YouTube, Vimeo, TikTok, Facebook (Mantiene tu lógica original con iframe y autoplay)
+    return (
+      <div className="relative w-full bg-black rounded-xl overflow-hidden" style={{ paddingTop: '56.25%' }}>
+        <iframe
+          src={`${parsed.embedUrl}?autoplay=1`}
+          title={alt}
+          className="absolute top-0 left-0 w-full h-full"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+        />
+      </div>
+    )
+  }
 
   return (
     <div className="w-full">
+      {/* Script de Instagram: solo se inyecta si el video es de Instagram */}
+      {parsed.platform === 'instagram' && (
+        <Script async src="//www.instagram.com/embed.js" strategy="lazyOnload" />
+      )}
+
       {!showVideo ? (
         <div className="relative w-full bg-gray-50 rounded-xl overflow-hidden flex justify-center">
           <img
@@ -73,15 +125,7 @@ export default function VideoEmbed({ videoUrl, mediaUrl, alt = 'Video ejercicio'
           </div>
         </div>
       ) : (
-        <div className="relative w-full bg-black rounded-xl overflow-hidden" style={{ paddingTop: '56.25%' }}>
-          <iframe
-            src={`${parsed.embedUrl}?autoplay=1`}
-            title={alt}
-            className="absolute top-0 left-0 w-full h-full"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          />
-        </div>
+        renderPlayer()
       )}
     </div>
   )
