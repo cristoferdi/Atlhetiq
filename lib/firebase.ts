@@ -25,7 +25,7 @@ export async function getRutina(id: string) {
   }
   
   try {
-    const docRef = doc(db, 'routines', id)
+    const docRef = doc(db, 'assigned_routines', id)
     const docSnap = await getDoc(docRef)
     
     if (docSnap.exists()) {
@@ -47,15 +47,15 @@ export async function getAllRoutines() {
   }
   
   try {
-    const querySnapshot = await getDocs(collection(db, 'routines'))
-    const routines: any[] = []
+    const querySnapshot = await getDocs(collection(db, 'assigned_routines'))
+    const assigned_routines: any[] = []
     querySnapshot.forEach((doc) => {
-      routines.push({ id: doc.id, ...doc.data() })
+      assigned_routines.push({ id: doc.id, ...doc.data() })
     })
-    console.log('Documentos en Firestore:', routines)
-    return routines
+    console.log('Documentos en Firestore:', assigned_routines)
+    return assigned_routines
   } catch (error) {
-    console.error('Error fetching routines:', error)
+    console.error('Error fetching assigned_routines:', error)
     return []
   }
 }
