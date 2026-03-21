@@ -5,14 +5,26 @@ interface ParsedVideo {
   videoId: string | null
   embedUrl: string | null
   isEmbeddable: boolean
+  isVertical: boolean
 }
 
 export function parseVideoUrl(url: string | undefined): ParsedVideo {
   if (!url) {
-    return { platform: 'unknown', videoId: null, embedUrl: null, isEmbeddable: false }
+    return { platform: 'unknown', videoId: null, embedUrl: null, isEmbeddable: false, isVertical: false }
   }
 
   const cleanUrl = url.trim()
+
+  if (cleanUrl.includes('youtube.com/shorts/')) {
+    const videoId = cleanUrl.split('shorts/')[1]?.split('?')[0]
+    return {
+      platform: 'youtube',
+      videoId,
+      embedUrl: videoId ? `https://www.youtube.com/embed/${videoId}` : null,
+      isEmbeddable: !!videoId,
+      isVertical: true,
+    }
+  }
 
   if (cleanUrl.includes('youtube.com/watch')) {
     const videoId = extractParam(url, 'v')
@@ -21,6 +33,7 @@ export function parseVideoUrl(url: string | undefined): ParsedVideo {
       videoId,
       embedUrl: videoId ? `https://www.youtube.com/embed/${videoId}` : null,
       isEmbeddable: !!videoId,
+      isVertical: false,
     }
   }
 
@@ -31,16 +44,7 @@ export function parseVideoUrl(url: string | undefined): ParsedVideo {
       videoId,
       embedUrl: videoId ? `https://www.youtube.com/embed/${videoId}` : null,
       isEmbeddable: !!videoId,
-    }
-  }
-
-  if (cleanUrl.includes('youtube.com/shorts/')) {
-    const videoId = cleanUrl.split('shorts/')[1]?.split('?')[0]
-    return {
-      platform: 'youtube',
-      videoId,
-      embedUrl: videoId ? `https://www.youtube.com/embed/${videoId}` : null,
-      isEmbeddable: !!videoId,
+      isVertical: false,
     }
   }
 
@@ -51,6 +55,7 @@ export function parseVideoUrl(url: string | undefined): ParsedVideo {
       videoId,
       embedUrl: videoId ? `https://player.vimeo.com/video/${videoId}` : null,
       isEmbeddable: !!videoId,
+      isVertical: false,
     }
   }
 
@@ -62,6 +67,7 @@ export function parseVideoUrl(url: string | undefined): ParsedVideo {
       videoId,
       embedUrl: videoId ? `https://www.tiktok.com/player/v1/${videoId}` : null,
       isEmbeddable: !!videoId,
+      isVertical: true,
     }
   }
 
@@ -72,6 +78,7 @@ export function parseVideoUrl(url: string | undefined): ParsedVideo {
       videoId,
       embedUrl: videoId ? `https://www.facebook.com/plugins/video.php?href=https://www.facebook.com/reel/${videoId}` : null,
       isEmbeddable: !!videoId,
+      isVertical: true,
     }
   }
 
@@ -84,6 +91,7 @@ export function parseVideoUrl(url: string | undefined): ParsedVideo {
       videoId,
       embedUrl: videoId ? `https://www.facebook.com/plugins/video.php?href=https://www.facebook.com/video.php?v=${videoId}` : null,
       isEmbeddable: !!videoId,
+      isVertical: true,
     }
   }
 
@@ -97,13 +105,14 @@ export function parseVideoUrl(url: string | undefined): ParsedVideo {
         videoId: shortcode,
         embedUrl: `https://www.instagram.com/p/${shortcode}/embed`,
         isEmbeddable: true,
+        isVertical: true,
       }
     }
     
-    return { platform: 'instagram', videoId: null, embedUrl: null, isEmbeddable: false }
+    return { platform: 'instagram', videoId: null, embedUrl: null, isEmbeddable: false, isVertical: true }
   }
 
-  return { platform: 'unknown', videoId: null, embedUrl: null, isEmbeddable: false }
+  return { platform: 'unknown', videoId: null, embedUrl: null, isEmbeddable: false, isVertical: false }
 }
 
 function extractParam(url: string, param: string): string | null {

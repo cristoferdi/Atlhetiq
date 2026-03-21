@@ -71,10 +71,7 @@ export default function VideoEmbed({ videoUrl, mediaUrl, alt = 'Video ejercicio'
       )
     }
 
-    const isVertical = parsed.platform === 'tiktok' || 
-                       parsed.platform === 'facebook' || 
-                       parsed.embedUrl?.includes('shorts')
-    const aspectRatio = isVertical ? '177.78%' : '56.25%'
+    const aspectRatio = parsed.isVertical ? '177.78%' : '56.25%'
 
     return (
       <div className="relative w-full bg-black rounded-xl overflow-hidden" style={{ paddingTop: aspectRatio }}>
