@@ -2,65 +2,108 @@
 
 import { useState, useEffect } from 'react'
 import { getRutina } from '../../lib/firebase'
-import { Exercise, WorkoutDay, WorkoutData } from '../data/mockData'
+import { Block, SubExercise, WorkoutDay } from '../data/mockData'
 import VideoEmbed, { VideoLink } from './VideoEmbed'
 
-function ExerciseCard({ exercise, index, onClick }: { exercise: Exercise; index: number; onClick: () => void }) {
+interface BlockProps {
+  block: Block
+  index: number
+  onClick: (block: Block, subExercise: SubExercise) => void
+}
+
+function BlockCard({ block, index, onClick }: BlockProps) {
+  const isSuperserie = block._combined
+  const firstSubExercise = block.sub_exercises[0]
+
   return (
-    <button 
-      onClick={onClick}
-      className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-4 text-left hover:shadow-md transition-shadow"
-    >
+    <div className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-4">
       <div className="p-4 pb-3">
         <div className="flex items-center gap-3 mb-3">
           <span className="w-7 h-7 rounded-full bg-blue-50 text-blue-600 text-sm font-semibold flex items-center justify-center">
             {index + 1}
           </span>
-          <h3 className="text-lg font-semibold text-gray-800 flex-1">{exercise.name}</h3>
-          <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
+          <div className="flex-1">
+            <h3 className="text-lg font-semibold text-gray-800">{firstSubExercise.name}</h3>
+            {isSuperserie && block.sub_exercises.length > 1 && (
+              <div className="flex flex-wrap gap-1 mt-1">
+                {block.sub_exercises.slice(1).map((sub, i) => (
+                  <span key={i} className="text-xs text-gray-500">
+                    + {sub.name}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+          {isSuperserie && (
+            <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
+              Superserie
+            </span>
+          )}
         </div>
         
         <div className="mb-3">
           <VideoEmbed 
-            videoUrl={exercise.video_url} 
-            mediaUrl={exercise.media_url} 
-            alt={exercise.name}
+            videoUrl={firstSubExercise.video_url} 
+            mediaUrl={firstSubExercise.gif_url} 
+            alt={firstSubExercise.name}
             showPlayButton={false}
           />
         </div>
         
-        <div className="flex gap-2">
+        <div className="flex gap-2 mb-2">
           <div className="flex-1 bg-blue-50 rounded-lg p-2 text-center">
-            <p className="text-xs text-blue-600 font-medium uppercase">Sets</p>
-            <p className="text-lg font-bold text-blue-700">{exercise.sets}</p>
+            <p className="text-xs text-blue-600 font-medium uppercase">Series</p>
+            <p className="text-lg font-bold text-blue-700">{block.series}</p>
           </div>
           <div className="flex-1 bg-emerald-50 rounded-lg p-2 text-center">
             <p className="text-xs text-emerald-600 font-medium uppercase">Reps</p>
-            <p className="text-lg font-bold text-emerald-700">{exercise.reps}</p>
+            <p className="text-lg font-bold text-emerald-700">{block.reps}</p>
           </div>
           <div className="flex-1 bg-amber-50 rounded-lg p-2 text-center">
             <p className="text-xs text-amber-600 font-medium uppercase">Descanso</p>
-            <p className="text-lg font-bold text-amber-700">{exercise.rest || '-'}</p>
+            <p className="text-lg font-bold text-amber-700">{block.rest_time}</p>
           </div>
         </div>
+
+        {block.indications && (
+          <div className="mt-3 p-3 bg-yellow-50 rounded-lg">
+            <p className="text-xs text-yellow-700 font-medium uppercase mb-1">Indicaciones</p>
+            <p className="text-sm text-gray-700 whitespace-pre-line">{block.indications}</p>
+          </div>
+        )}
+
+        {block.sub_exercises.length > 1 && (
+          <button
+            onClick={() => onClick(block, firstSubExercise)}
+            className="w-full mt-3 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
+          >
+            Ver {block.sub_exercises.length} ejercicios →
+          </button>
+        )}
       </div>
-    </button>
+    </div>
   )
 }
 
-function InstructionsModal({ exercise, onClose }: { exercise: Exercise; onClose: () => void }) {
+interface InstructionsModalProps {
+  block: Block
+  onClose: () => void
+}
+
+function InstructionsModal({ block, onClose }: InstructionsModalProps) {
+  const [selectedSubExercise, setSelectedSubExercise] = useState<SubExercise | null>(
+    block.sub_exercises[0] || null
+  )
+
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto">
-      <div 
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm" 
-        onClick={onClose}
-      />
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
       <div className="relative bg-white w-full max-w-md min-h-full overflow-hidden animate-slide-up pt-4 pb-8">
         <div className="px-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-gray-800">{exercise.name}</h2>
+            <h2 className="text-xl font-bold text-gray-800 flex-1 pr-2">
+              {block.sub_exercises.length > 1 ? 'Superserie' : selectedSubExercise?.name}
+            </h2>
             <button 
               onClick={onClose}
               className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors flex-shrink-0"
@@ -70,50 +113,84 @@ function InstructionsModal({ exercise, onClose }: { exercise: Exercise; onClose:
               </svg>
             </button>
           </div>
-          
-          <div className="mb-4">
-            <VideoEmbed 
-              videoUrl={exercise.video_url} 
-              mediaUrl={exercise.media_url} 
-              alt={exercise.name}
-            />
-          </div>
-          
-          {exercise.video_url && (
-            <div className="mb-4">
-              <VideoLink videoUrl={exercise.video_url} />
+
+          {block._combined && block.sub_exercises.length > 1 && (
+            <div className="flex gap-2 overflow-x-auto mb-4 pb-2 scrollbar-hide">
+              {block.sub_exercises.map((sub, i) => (
+                <button
+                  key={i}
+                  onClick={() => setSelectedSubExercise(sub)}
+                  className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                    selectedSubExercise?.exercise_id === sub.exercise_id
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  Ejercicio {i + 1}
+                </button>
+              ))}
             </div>
           )}
-          
+
+          {selectedSubExercise && (
+            <>
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">{selectedSubExercise.name}</h3>
+                <VideoEmbed 
+                  videoUrl={selectedSubExercise.video_url} 
+                  mediaUrl={selectedSubExercise.gif_url} 
+                  alt={selectedSubExercise.name}
+                />
+              </div>
+              
+              {selectedSubExercise.video_url && (
+                <div className="mb-4">
+                  <VideoLink videoUrl={selectedSubExercise.video_url} />
+                </div>
+              )}
+            </>
+          )}
+
           <div className="flex gap-2 mb-4">
             <div className="flex-1 bg-blue-50 rounded-lg p-2 text-center">
-              <p className="text-xs text-blue-600 font-medium uppercase">Sets</p>
-              <p className="text-lg font-bold text-blue-700">{exercise.sets}</p>
+              <p className="text-xs text-blue-600 font-medium uppercase">Series</p>
+              <p className="text-lg font-bold text-blue-700">{block.series}</p>
             </div>
             <div className="flex-1 bg-emerald-50 rounded-lg p-2 text-center">
               <p className="text-xs text-emerald-600 font-medium uppercase">Reps</p>
-              <p className="text-lg font-bold text-emerald-700">{exercise.reps}</p>
+              <p className="text-lg font-bold text-emerald-700">{block.reps}</p>
             </div>
             <div className="flex-1 bg-amber-50 rounded-lg p-2 text-center">
               <p className="text-xs text-amber-600 font-medium uppercase">Descanso</p>
-              <p className="text-lg font-bold text-amber-700">{exercise.rest || '-'}</p>
+              <p className="text-lg font-bold text-amber-700">{block.rest_time}</p>
             </div>
           </div>
 
-          <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">Instrucciones</h3>
-          <div className="space-y-3 pb-4">
-            {exercise.instructions && exercise.instructions.map((instruction, index) => (
-              <div key={index} className="flex gap-3">
-                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 text-blue-600 text-sm font-medium flex items-center justify-center">
-                  {index + 1}
-                </span>
-                <p className="text-gray-600 text-sm leading-relaxed">{instruction}</p>
+          {block.indications && (
+            <div className="mb-4 p-3 bg-yellow-50 rounded-lg">
+              <p className="text-xs text-yellow-700 font-medium uppercase mb-1">Indicaciones</p>
+              <p className="text-sm text-gray-700 whitespace-pre-line">{block.indications}</p>
+            </div>
+          )}
+
+          {selectedSubExercise && (
+            <>
+              <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">Instrucciones</h3>
+              <div className="space-y-3 pb-4">
+                {selectedSubExercise.instructions && selectedSubExercise.instructions.map((instruction, index) => (
+                  <div key={index} className="flex gap-3">
+                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 text-blue-600 text-sm font-medium flex items-center justify-center">
+                      {index + 1}
+                    </span>
+                    <p className="text-gray-600 text-sm leading-relaxed">{instruction}</p>
+                  </div>
+                ))}
+                {(!selectedSubExercise.instructions || selectedSubExercise.instructions.length === 0) && (
+                  <p className="text-gray-400 text-sm">No hay instrucciones disponibles</p>
+                )}
               </div>
-            ))}
-            {(!exercise.instructions || exercise.instructions.length === 0) && (
-              <p className="text-gray-400 text-sm">No hay instrucciones disponibles</p>
-            )}
-          </div>
+            </>
+          )}
         </div>
       </div>
     </div>
@@ -134,7 +211,7 @@ export default function WorkoutApp({ routineId }: { routineId: string }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedDay, setSelectedDay] = useState<WorkoutDay | null>(null)
-  const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null)
+  const [selectedBlock, setSelectedBlock] = useState<Block | null>(null)
 
   useEffect(() => {
     async function fetchRutina() {
@@ -148,7 +225,7 @@ export default function WorkoutApp({ routineId }: { routineId: string }) {
             coachName: (rutina as any).coachName,
             clientName: (rutina as any).clientName,
             daysCount: (rutina as any).routine?.length,
-            exercisesCount: (rutina as any).routine?.[0]?.exercises?.length
+            blocksCount: (rutina as any).routine?.[0]?.blocks?.length
           })
           setData(rutina as unknown as FirestoreRoutine)
           if ((rutina as unknown as FirestoreRoutine).routine.length > 0) {
@@ -213,6 +290,10 @@ export default function WorkoutApp({ routineId }: { routineId: string }) {
 
   const { coachName, clientName, clientGoal, routine } = data
 
+  const handleBlockClick = (block: Block, subExercise: SubExercise) => {
+    setSelectedBlock(block)
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 pb-8">
       <header className="bg-white shadow-sm sticky top-0 z-10">
@@ -272,22 +353,22 @@ export default function WorkoutApp({ routineId }: { routineId: string }) {
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-gray-800">{selectedDay.day_name}</h2>
               <span className="text-sm text-gray-500">
-                {selectedDay.exercises.length} ejercicios
+                {selectedDay.blocks.length} bloques
               </span>
             </div>
 
             <div className="space-y-4">
-              {selectedDay.exercises.map((exercise, index) => (
-                <ExerciseCard 
-                  key={exercise.id} 
-                  exercise={exercise} 
+              {selectedDay.blocks.map((block, index) => (
+                <BlockCard 
+                  key={block.id} 
+                  block={block} 
                   index={index}
-                  onClick={() => setSelectedExercise(exercise)}
+                  onClick={handleBlockClick}
                 />
               ))}
             </div>
 
-            {selectedDay.exercises.length === 0 && (
+            {selectedDay.blocks.length === 0 && (
               <div className="text-center py-12">
                 <p className="text-gray-500">No hay ejercicios programados para este día</p>
               </div>
@@ -296,10 +377,10 @@ export default function WorkoutApp({ routineId }: { routineId: string }) {
         )}
       </main>
 
-      {selectedExercise && (
+      {selectedBlock && (
         <InstructionsModal 
-          exercise={selectedExercise} 
-          onClose={() => setSelectedExercise(null)} 
+          block={selectedBlock} 
+          onClose={() => setSelectedBlock(null)} 
         />
       )}
     </div>

@@ -3,3 +3,5 @@ nul
 node_modules/
 .env.local
 .next/
+ESTRUCTURA_RUTINAS.md
+CONTEXT.md
