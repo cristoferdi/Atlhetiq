@@ -8,31 +8,22 @@ export async function getImageAsBase64(url: string): Promise<string> {
   }
 
   try {
-    const response = await fetch(url, {
-      mode: 'cors',
-      credentials: 'omit',
-    })
+    const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(url)}`
+    const response = await fetch(proxyUrl)
 
     if (!response.ok) {
-      console.warn(`[ImageUtils] Failed to fetch image: ${url}, status: ${response.status}`)
+      console.warn(`[ImageUtils] Proxy failed for: ${url}, status: ${response.status}`)
       return ''
     }
 
-    const blob = await response.blob()
+    const data = await response.json()
     
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        const base64 = reader.result as string
-        imageCache.set(url, base64)
-        resolve(base64)
-      }
-      reader.onerror = () => {
-        console.warn(`[ImageUtils] Failed to convert image to base64: ${url}`)
-        resolve('')
-      }
-      reader.readAsDataURL(blob)
-    })
+    if (data.base64) {
+      imageCache.set(url, data.base64)
+      return data.base64
+    }
+
+    return ''
   } catch (error) {
     console.warn(`[ImageUtils] Error fetching image: ${url}`, error)
     return ''
