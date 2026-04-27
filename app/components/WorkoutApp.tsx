@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from 'react'
 import { getRutina } from '../../lib/firebase'
 import { Block, SubExercise, WorkoutDay } from '../data/mockData'
 import VideoEmbed, { VideoLink } from './VideoEmbed'
+import PdfTemplate from './PdfTemplate'
+import { downloadPdf } from '../utils/pdfUtils'
 
 interface BlockCardProps {
   block: Block
@@ -315,6 +317,8 @@ export default function WorkoutApp({ routineId }: { routineId: string }) {
   const [error, setError] = useState<string | null>(null)
   const [selectedDay, setSelectedDay] = useState<WorkoutDay | null>(null)
   const [selectedBlock, setSelectedBlock] = useState<Block | null>(null)
+  const [isPdfGenerating, setIsPdfGenerating] = useState(false)
+  const pdfTemplateRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     async function fetchRutina() {
@@ -397,6 +401,19 @@ export default function WorkoutApp({ routineId }: { routineId: string }) {
     setSelectedBlock(block)
   }
 
+  const handleDownloadPdf = async () => {
+    if (!pdfTemplateRef.current || !data) return
+    
+    setIsPdfGenerating(true)
+    try {
+      await downloadPdf(pdfTemplateRef, data.clientName, data.routineTitle || 'Rutina')
+    } catch (err) {
+      console.error('Error generating PDF:', err)
+    } finally {
+      setIsPdfGenerating(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 pb-8">
       <header className="bg-white shadow-sm sticky top-0 z-10">
@@ -416,15 +433,36 @@ export default function WorkoutApp({ routineId }: { routineId: string }) {
           </div>
           
           <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-4">
-            <p className="text-white/80 text-xs font-medium mb-1">Alumno</p>
-            <p className="text-white font-bold text-lg">{clientName}</p>
-            <div className="flex items-center gap-2 mt-2">
-              <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center">
-                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </span>
-              <span className="text-white/90 text-sm">{clientGoal}</span>
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="text-white/80 text-xs font-medium mb-1">Alumno</p>
+                <p className="text-white font-bold text-lg">{clientName}</p>
+                <div className="flex items-center gap-2 mt-2">
+                  <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center">
+                    <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  </span>
+                  <span className="text-white/90 text-sm">{clientGoal}</span>
+                </div>
+              </div>
+              <button
+                onClick={handleDownloadPdf}
+                disabled={isPdfGenerating}
+                className="flex-shrink-0 ml-3 p-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors"
+                title="Descargar PDF"
+              >
+                {isPdfGenerating ? (
+                  <svg className="w-5 h-5 text-white animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                )}
+              </button>
             </div>
           </div>
         </div>
@@ -487,6 +525,18 @@ export default function WorkoutApp({ routineId }: { routineId: string }) {
           onClose={() => setSelectedBlock(null)} 
         />
       )}
+
+      <div ref={pdfTemplateRef} className="hidden">
+        {data && (
+          <PdfTemplate
+            routineTitle={data.routineTitle}
+            clientName={data.clientName}
+            clientGoal={data.clientGoal || ''}
+            coachName={data.coachName}
+            routine={data.routine}
+          />
+        )}
+      </div>
     </div>
   )
 }
