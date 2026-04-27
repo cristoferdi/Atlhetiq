@@ -39,6 +39,37 @@ export async function getImageAsBase64(url: string): Promise<string> {
   }
 }
 
+export async function preloadAllImages(routine: any[]): Promise<Record<string, string>> {
+  const imageMap: Record<string, string> = {}
+  const urls: string[] = []
+
+  for (const day of routine) {
+    if (day.blocks) {
+      for (const block of day.blocks) {
+        if (block.sub_exercises) {
+          for (const subExercise of block.sub_exercises) {
+            if (subExercise.gif_url && !imageMap[subExercise.gif_url]) {
+              urls.push(subExercise.gif_url)
+            }
+          }
+        }
+      }
+    }
+  }
+
+  console.log(`[ImageUtils] Preloading ${urls.length} images...`)
+
+  for (const url of urls) {
+    const base64 = await getImageAsBase64(url)
+    if (base64) {
+      imageMap[url] = base64
+    }
+  }
+
+  console.log(`[ImageUtils] Successfully loaded ${Object.keys(imageMap).length} images`)
+  return imageMap
+}
+
 export function clearImageCache(): void {
   imageCache.clear()
 }

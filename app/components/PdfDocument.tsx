@@ -2,8 +2,6 @@
 
 import { Document, Page, View, Text, Image, Link, StyleSheet, Font } from '@react-pdf/renderer'
 import { WorkoutDay } from '../data/mockData'
-import { getImageAsBase64 } from '../utils/imageUtils'
-import { useEffect, useState } from 'react'
 
 Font.register({
   family: 'Helvetica',
@@ -51,6 +49,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     borderLeftWidth: 5,
     borderLeftColor: '#000000',
+    marginTop: 15,
     marginBottom: 12,
   },
   blockCard: {
@@ -144,7 +143,7 @@ const styles = StyleSheet.create({
     fontSize: 7,
     color: '#9CA3AF',
   },
-  loadingImage: {
+  noImage: {
     width: '100%',
     height: 100,
     backgroundColor: '#F3F4F6',
@@ -152,7 +151,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  loadingText: {
+  noImageText: {
     fontSize: 8,
     color: '#9CA3AF',
   },
@@ -161,42 +160,19 @@ const styles = StyleSheet.create({
 interface ExerciseImageProps {
   gifUrl: string
   videoUrl?: string
+  imageMap: Record<string, string>
 }
 
-const ExerciseImage = ({ gifUrl, videoUrl }: ExerciseImageProps) => {
-  const [base64Image, setBase64Image] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    let mounted = true
-
-    const loadImage = async () => {
-      setLoading(true)
-      const base64 = await getImageAsBase64(gifUrl)
-      if (mounted) {
-        setBase64Image(base64)
-        setLoading(false)
-      }
-    }
-
-    loadImage()
-
-    return () => {
-      mounted = false
-    }
-  }, [gifUrl])
+const ExerciseImage = ({ gifUrl, videoUrl, imageMap }: ExerciseImageProps) => {
+  const base64Image = imageMap[gifUrl]
 
   const imageContent = (
     <View style={styles.exerciseImageContainer}>
-      {loading ? (
-        <View style={styles.loadingImage}>
-          <Text style={styles.loadingText}>Cargando...</Text>
-        </View>
-      ) : base64Image ? (
+      {base64Image ? (
         <Image src={base64Image} style={styles.exerciseImage} />
       ) : (
-        <View style={styles.loadingImage}>
-          <Text style={styles.loadingText}>Sin imagen</Text>
+        <View style={styles.noImage}>
+          <Text style={styles.noImageText}>Sin imagen</Text>
         </View>
       )}
     </View>
@@ -217,11 +193,14 @@ const ExerciseImage = ({ gifUrl, videoUrl }: ExerciseImageProps) => {
 interface BlockProps {
   block: any
   blockIndex: number
+  imageMap: Record<string, string>
 }
 
-const Block = ({ block, blockIndex }: BlockProps) => {
+const Block = ({ block, blockIndex, imageMap }: BlockProps) => {
   const isSuperserie = block._combined && block.sub_exercises.length > 1
   const letters = ['A', 'B', 'C', 'D', 'E', 'F']
+
+  const itemStyle = isSuperserie ? styles.exerciseItem : [styles.exerciseItem, styles.exerciseItemFull]
 
   return (
     <View style={[styles.blockCard, isSuperserie ? styles.superserie : styles.simple]}>
@@ -251,7 +230,6 @@ const Block = ({ block, blockIndex }: BlockProps) => {
       <View style={styles.exercisesRow}>
         {block.sub_exercises.map((subExercise: any, subIndex: number) => {
           const prefix = isSuperserie ? `${blockIndex + 1}${letters[subIndex]}. ` : ''
-          const itemStyle = isSuperserie ? styles.exerciseItem : [styles.exerciseItem, styles.exerciseItemFull]
 
           return (
             <View 
@@ -264,6 +242,7 @@ const Block = ({ block, blockIndex }: BlockProps) => {
               <ExerciseImage 
                 gifUrl={subExercise.gif_url} 
                 videoUrl={subExercise.video_url}
+                imageMap={imageMap}
               />
             </View>
           )
@@ -273,55 +252,23 @@ const Block = ({ block, blockIndex }: BlockProps) => {
   )
 }
 
-interface DayPageProps {
+interface DayContentProps {
   day: WorkoutDay
   dayIndex: number
+  showHeader?: boolean
+  clientName?: string
+  clientGoal?: string
+  coachName?: string
+  imageMap: Record<string, string>
 }
 
-const DayPage = ({ day, dayIndex }: DayPageProps) => {
+const DayContent = ({ day, dayIndex, showHeader, clientName, clientGoal, coachName, imageMap }: DayContentProps) => {
   return (
-    <Page size="A4" style={styles.page} wrap={false}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Rutina de Ejercicios</Text>
-        <View style={styles.headerGrid}>
-          <Text style={styles.headerItem}>
-            <Text style={styles.headerLabel}>DÍA:</Text> {day.day_name}
-          </Text>
-        </View>
-      </View>
-
-      {day.blocks.map((block, blockIndex) => (
-        <Block key={block.id} block={block} blockIndex={blockIndex} />
-      ))}
-
-      <Text 
-        style={styles.footer} 
-        render={({ pageNumber, totalPages }) => 
-          `Generado por Athletiq - Página ${pageNumber} de ${totalPages}`
-        } 
-        fixed 
-      />
-    </Page>
-  )
-}
-
-interface PdfDocumentProps {
-  clientName: string
-  clientGoal: string
-  coachName: string
-  routine: WorkoutDay[]
-}
-
-const PdfDocument = ({ clientName, clientGoal, coachName, routine }: PdfDocumentProps) => {
-  return (
-    <Document>
-      <Page size="A4" style={styles.page}>
+    <>
+      {showHeader && (
         <View style={styles.header}>
-          <Text style={styles.title}>Rutina de Ejercicios</Text>
+          <Text style={styles.title}>{clientName}</Text>
           <View style={styles.headerGrid}>
-            <Text style={styles.headerItem}>
-              <Text style={styles.headerLabel}>CLIENTE:</Text> {clientName}
-            </Text>
             <Text style={styles.headerItem}>
               <Text style={styles.headerLabel}>OBJETIVO:</Text> {clientGoal}
             </Text>
@@ -330,13 +277,58 @@ const PdfDocument = ({ clientName, clientGoal, coachName, routine }: PdfDocument
             </Text>
           </View>
         </View>
+      )}
 
-        <View style={{ marginTop: 20 }}>
-          <Text style={{ fontSize: 10, color: '#64748B', marginBottom: 10 }}>
-            Esta rutina contiene {routine.length} día{routine.length !== 1 ? 's' : ''}. 
-            Continue a la siguiente página para ver los detalles.
-          </Text>
-        </View>
+      <View style={styles.daySection}>
+        <Text>{day.day_name}</Text>
+      </View>
+
+      {day.blocks.map((block, blockIndex) => (
+        <Block key={block.id} block={block} blockIndex={blockIndex} imageMap={imageMap} />
+      ))}
+    </>
+  )
+}
+
+interface PdfDocumentProps {
+  clientName: string
+  clientGoal: string
+  coachName: string
+  routine: WorkoutDay[]
+  imageMap: Record<string, string>
+}
+
+const PdfDocument = ({ clientName, clientGoal, coachName, routine, imageMap }: PdfDocumentProps) => {
+  return (
+    <Document>
+      <Page size="A4" style={styles.page}>
+        <DayContent 
+          day={routine[0]} 
+          dayIndex={0} 
+          showHeader={true}
+          clientName={clientName}
+          clientGoal={clientGoal}
+          coachName={coachName}
+          imageMap={imageMap}
+        />
+
+        {routine.slice(1).map((day, dayIndex) => (
+          <Page key={day.day_id} size="A4" style={styles.page} wrap={false}>
+            <DayContent 
+              day={day} 
+              dayIndex={dayIndex + 1}
+              showHeader={false}
+              imageMap={imageMap}
+            />
+            <Text 
+              style={styles.footer} 
+              render={({ pageNumber, totalPages }) => 
+                `Generado por Athletiq - Página ${pageNumber} de ${totalPages}`
+              } 
+              fixed 
+            />
+          </Page>
+        ))}
 
         <Text 
           style={styles.footer} 
@@ -346,10 +338,6 @@ const PdfDocument = ({ clientName, clientGoal, coachName, routine }: PdfDocument
           fixed 
         />
       </Page>
-
-      {routine.map((day, dayIndex) => (
-        <DayPage key={day.day_id} day={day} dayIndex={dayIndex} />
-      ))}
     </Document>
   )
 }
