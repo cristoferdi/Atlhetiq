@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import sharp from 'sharp'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -17,13 +18,18 @@ export async function GET(request: Request) {
 
     const arrayBuffer = await response.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
-    const contentType = response.headers.get('content-type') || 'image/gif'
     
-    const base64String = `data:${contentType};base64,${buffer.toString('base64')}`
+    const pngBuffer = await sharp(buffer)
+      .png()
+      .toBuffer()
+    
+    const base64String = `data:image/png;base64,${pngBuffer.toString('base64')}`
 
     return NextResponse.json({ base64: base64String })
   } catch (error) {
     console.error('[proxy-image] Error:', error)
-    return NextResponse.json({ error: 'Failed to process image' }, { status: 500 })
+    return NextResponse.json({ 
+      base64: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=' 
+    }, { status: 500 })
   }
 }
