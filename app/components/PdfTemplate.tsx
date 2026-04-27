@@ -1,4 +1,4 @@
-import { Block, WorkoutDay } from '../data/mockData'
+import { WorkoutDay } from '../data/mockData'
 
 interface PdfTemplateProps {
   routineTitle: string
@@ -11,168 +11,25 @@ interface PdfTemplateProps {
 const letters = ['A', 'B', 'C', 'D', 'E', 'F']
 
 export default function PdfTemplate({ routineTitle, clientName, clientGoal, coachName, routine }: PdfTemplateProps) {
-  const containerStyle: React.CSSProperties = {
-    fontFamily: 'Helvetica, Arial, sans-serif',
-    fontSize: '10pt',
-    color: '#333333',
-    background: '#FFFFFF',
-    padding: '20mm',
-    width: '210mm',
-    minHeight: '297mm',
-    boxSizing: 'border-box',
-    position: 'absolute',
-    left: '-9999px',
-    top: '0',
-  }
-
-  const headerStyle: React.CSSProperties = {
-    borderBottom: '3px solid #000000',
-    paddingBottom: '15px',
-    marginBottom: '20px',
-  }
-
-  const headerTitleStyle: React.CSSProperties = {
-    fontSize: '24pt',
-    fontWeight: 'bold',
-    textTransform: 'uppercase',
-    marginBottom: '15px',
-  }
-
-  const headerGridStyle: React.CSSProperties = {
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr 1fr',
-    gap: '10px',
-  }
-
-  const headerLabelStyle: React.CSSProperties = {
-    fontWeight: 'bold',
-    color: '#64748B',
-  }
-
-  const daySectionStyle: React.CSSProperties = {
-    background: '#F4F4F4',
-    padding: '10px',
-    fontSize: '12pt',
-    fontWeight: 'bold',
-    borderLeft: '5px solid #000000',
-    margin: '20px 0 15px 0',
-    pageBreakAfter: 'avoid',
-  }
-
-  const getBlockCardStyle = (isSuperserie: boolean): React.CSSProperties => ({
-    border: '1px solid #EEEEEE',
-    borderRadius: '8px',
-    padding: '15px',
-    marginBottom: '15px',
-    pageBreakInside: 'avoid',
-    borderLeft: isSuperserie ? '5px solid #3B82F6' : '5px solid #333333',
-    background: isSuperserie ? '#F8FAFC' : '#FFFFFF',
-  })
-
-  const blockTitleStyle: React.CSSProperties = {
-    fontSize: '11pt',
-    fontWeight: 'bold',
-    marginBottom: '10px',
-  }
-
-  const statsTableStyle: React.CSSProperties = {
-    width: '100%',
-    borderCollapse: 'collapse',
-    marginBottom: '10px',
-  }
-
-  const statsCellStyle: React.CSSProperties = {
-    padding: '5px',
-    border: '1px solid #E5E5E5',
-    textAlign: 'center',
-  }
-
-  const statsLabelStyle: React.CSSProperties = {
-    fontSize: '8pt',
-    textTransform: 'uppercase',
-    color: '#64748B',
-  }
-
-  const statsValueStyle: React.CSSProperties = {
-    fontSize: '11pt',
-    fontWeight: 'bold',
-  }
-
-  const indicationsBoxStyle: React.CSSProperties = {
-    background: '#FEF3C7',
-    border: '1px solid #FDE68A',
-    color: '#92400E',
-    padding: '10px',
-    marginBottom: '10px',
-    fontSize: '9pt',
-    whiteSpace: 'pre-line',
-  }
-
-  const exercisesGridStyle: React.CSSProperties = {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: '10px',
-  }
-
-  const exerciseItemStyle: React.CSSProperties = {
-    flex: '1',
-    minWidth: '45%',
-  }
-
-  const exerciseItemFullStyle: React.CSSProperties = {
-    flex: '1',
-    minWidth: '100%',
-  }
-
-  const exerciseTitleStyle: React.CSSProperties = {
-    fontWeight: 'bold',
-    fontSize: '10pt',
-    marginBottom: '5px',
-  }
-
-  const exerciseImageStyle: React.CSSProperties = {
-    width: '100%',
-    height: '150px',
-    objectFit: 'cover',
-    display: 'block',
-    borderRadius: '8px',
-  }
-
-  const videoLinkStyle: React.CSSProperties = {
-    display: 'block',
-    textAlign: 'center',
-    padding: '8px',
-    fontSize: '7pt',
-    color: '#3B82F6',
-    textDecoration: 'none',
-  }
-
-  const footerStyle: React.CSSProperties = {
-    marginTop: '20px',
-    textAlign: 'center',
-    fontSize: '8pt',
-    color: '#9CA3AF',
-  }
-
   return (
-    <div style={containerStyle}>
-      <div style={headerStyle}>
-        <div style={headerTitleStyle}>{routineTitle}</div>
-        <div style={headerGridStyle}>
-          <div style={{ fontSize: '10pt' }}>
-            <span style={headerLabelStyle}>CLIENTE:</span> {clientName}
+    <div className="pdf-page">
+      <div className="pdf-header">
+        <div className="pdf-title">{routineTitle}</div>
+        <div className="pdf-info-grid">
+          <div className="pdf-info-item">
+            <span className="pdf-label">CLIENTE:</span> {clientName}
           </div>
-          <div style={{ fontSize: '10pt' }}>
-            <span style={headerLabelStyle}>OBJETIVO:</span> {clientGoal}
+          <div className="pdf-info-item">
+            <span className="pdf-label">OBJETIVO:</span> {clientGoal}
           </div>
-          <div style={{ fontSize: '10pt' }}>
-            <span style={headerLabelStyle}>COACH:</span> {coachName}
+          <div className="pdf-info-item">
+            <span className="pdf-label">COACH:</span> {coachName}
           </div>
         </div>
       </div>
 
       {routine.map((day) => (
-        <div key={day.day_id} style={daySectionStyle}>
+        <div key={day.day_id} className="pdf-day-section">
           {day.day_name}
         </div>
       ))}
@@ -184,38 +41,38 @@ export default function PdfTemplate({ routineTitle, clientName, clientGoal, coac
           return (
             <div 
               key={block.id} 
-              style={getBlockCardStyle(isSuperserie)}
+              className={`pdf-block-card ${isSuperserie ? 'superserie' : 'simple'}`}
             >
-              <div style={blockTitleStyle}>
+              <div className="pdf-block-title">
                 {blockIndex + 1}. {isSuperserie ? 'SUPERSERIE' : 'BLOQUE SIMPLE'}
               </div>
               
-              <table style={statsTableStyle}>
+              <table className="pdf-stats-table">
                 <tbody>
                   <tr>
-                    <td style={statsCellStyle}>
-                      <div style={statsLabelStyle}>Series</div>
-                      <div style={statsValueStyle}>{block.series}</div>
+                    <td className="pdf-stats-cell">
+                      <div className="pdf-stats-label">Series</div>
+                      <div className="pdf-stats-value">{block.series}</div>
                     </td>
-                    <td style={statsCellStyle}>
-                      <div style={statsLabelStyle}>Reps</div>
-                      <div style={statsValueStyle}>{block.reps}</div>
+                    <td className="pdf-stats-cell">
+                      <div className="pdf-stats-label">Reps</div>
+                      <div className="pdf-stats-value">{block.reps}</div>
                     </td>
-                    <td style={statsCellStyle}>
-                      <div style={statsLabelStyle}>Descanso</div>
-                      <div style={statsValueStyle}>{block.rest_time}</div>
+                    <td className="pdf-stats-cell">
+                      <div className="pdf-stats-label">Descanso</div>
+                      <div className="pdf-stats-value">{block.rest_time}</div>
                     </td>
                   </tr>
                 </tbody>
               </table>
               
               {block.indications && (
-                <div style={indicationsBoxStyle}>
+                <div className="pdf-indications-box">
                   {block.indications}
                 </div>
               )}
               
-              <div style={exercisesGridStyle}>
+              <div className={`pdf-exercises-grid ${!isSuperserie ? 'single' : ''}`}>
                 {block.sub_exercises.map((subExercise, subIndex) => {
                   const prefix = isSuperserie 
                     ? `${blockIndex + 1}${letters[subIndex]}. ` 
@@ -225,30 +82,32 @@ export default function PdfTemplate({ routineTitle, clientName, clientGoal, coac
                   return (
                     <div 
                       key={subExercise.exercise_id || subIndex} 
-                      style={fullWidth ? exerciseItemFullStyle : exerciseItemStyle}
+                      className={`pdf-exercise-item ${fullWidth ? 'full-width' : ''}`}
                     >
-                      <div style={exerciseTitleStyle}>
+                      <div className="pdf-exercise-title">
                         {prefix}{subExercise.name}
                       </div>
-                      <div>
+                      <div className="pdf-exercise-image-container">
                         {subExercise.video_url ? (
                           <a href={subExercise.video_url} target="_blank" rel="noopener noreferrer">
                             <img 
                               src={subExercise.gif_url} 
                               alt={subExercise.name}
-                              style={exerciseImageStyle}
+                              className="pdf-exercise-image"
+                              crossOrigin="anonymous"
                             />
                           </a>
                         ) : (
                           <img 
                             src={subExercise.gif_url} 
                             alt={subExercise.name}
-                            style={exerciseImageStyle}
+                            className="pdf-exercise-image"
+                            crossOrigin="anonymous"
                           />
                         )}
                       </div>
                       {subExercise.video_url && (
-                        <a href={subExercise.video_url} target="_blank" rel="noopener noreferrer" style={videoLinkStyle}>
+                        <a href={subExercise.video_url} target="_blank" rel="noopener noreferrer" className="pdf-video-link">
                           ▶ Toca para ver video
                         </a>
                       )}
@@ -261,9 +120,167 @@ export default function PdfTemplate({ routineTitle, clientName, clientGoal, coac
         })
       )}
 
-      <div style={footerStyle}>
+      <div className="pdf-footer">
         Generado por Athletiq
       </div>
+
+      <style jsx>{`
+        .pdf-page {
+          font-family: Helvetica, Arial, sans-serif;
+          font-size: 10pt;
+          color: #333333;
+          background: #FFFFFF;
+          padding: 15mm;
+          width: 100%;
+          max-width: 190mm;
+          margin: 0 auto;
+          box-sizing: border-box;
+        }
+        
+        .pdf-header {
+          border-bottom: 3px solid #000000;
+          padding-bottom: 15px;
+          margin-bottom: 20px;
+        }
+        
+        .pdf-title {
+          font-size: 18pt;
+          font-weight: bold;
+          text-transform: uppercase;
+          margin-bottom: 12px;
+        }
+        
+        .pdf-info-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr 1fr;
+          gap: 8px;
+        }
+        
+        .pdf-info-item {
+          font-size: 9pt;
+        }
+        
+        .pdf-label {
+          font-weight: bold;
+          color: #64748B;
+        }
+        
+        .pdf-day-section {
+          background: #F4F4F4;
+          padding: 8px;
+          font-size: 11pt;
+          font-weight: bold;
+          border-left: 5px solid #000000;
+          margin: 15px 0 12px 0;
+          page-break-after: avoid;
+        }
+        
+        .pdf-block-card {
+          border: 1px solid #EEEEEE;
+          border-radius: 6px;
+          padding: 12px;
+          margin-bottom: 12px;
+          page-break-inside: avoid;
+        }
+        
+        .pdf-block-card.superserie {
+          border-left: 5px solid #3B82F6;
+          background: #F8FAFC;
+        }
+        
+        .pdf-block-card.simple {
+          border-left: 5px solid #333333;
+          background: #FFFFFF;
+        }
+        
+        .pdf-block-title {
+          font-size: 10pt;
+          font-weight: bold;
+          margin-bottom: 8px;
+        }
+        
+        .pdf-stats-table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-bottom: 8px;
+        }
+        
+        .pdf-stats-cell {
+          padding: 4px;
+          border: 1px solid #E5E5E5;
+          text-align: center;
+        }
+        
+        .pdf-stats-label {
+          font-size: 7pt;
+          text-transform: uppercase;
+          color: #64748B;
+        }
+        
+        .pdf-stats-value {
+          font-size: 10pt;
+          font-weight: bold;
+        }
+        
+        .pdf-indications-box {
+          background: #FEF3C7;
+          border: 1px solid #FDE68A;
+          color: #92400E;
+          padding: 8px;
+          margin-bottom: 8px;
+          font-size: 8pt;
+          white-space: pre-line;
+        }
+        
+        .pdf-exercises-grid {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+        }
+        
+        .pdf-exercise-item {
+          flex: 1;
+          min-width: 45%;
+        }
+        
+        .pdf-exercise-item.full-width {
+          min-width: 100%;
+        }
+        
+        .pdf-exercise-title {
+          font-weight: bold;
+          font-size: 9pt;
+          margin-bottom: 4px;
+        }
+        
+        .pdf-exercise-image-container {
+          border-radius: 6px;
+          overflow: hidden;
+        }
+        
+        .pdf-exercise-image {
+          width: 100%;
+          height: 120px;
+          object-fit: cover;
+          display: block;
+        }
+        
+        .pdf-video-link {
+          display: block;
+          text-align: center;
+          padding: 6px;
+          font-size: 7pt;
+          color: #3B82F6;
+          text-decoration: none;
+        }
+        
+        .pdf-footer {
+          margin-top: 15px;
+          text-align: center;
+          font-size: 7pt;
+          color: #9CA3AF;
+        }
+      `}</style>
     </div>
   )
 }
