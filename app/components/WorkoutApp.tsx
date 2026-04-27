@@ -4,8 +4,8 @@ import { useState, useEffect, useRef } from 'react'
 import { getRutina } from '../../lib/firebase'
 import { Block, SubExercise, WorkoutDay } from '../data/mockData'
 import VideoEmbed, { VideoLink } from './VideoEmbed'
-import PdfTemplate from './PdfTemplate'
-import { downloadPdf } from '../utils/pdfUtils'
+import PdfDocument from './PdfDocument'
+import { PDFDownloadLink } from '@react-pdf/renderer'
 
 interface BlockCardProps {
   block: Block
@@ -317,9 +317,7 @@ export default function WorkoutApp({ routineId }: { routineId: string }) {
   const [error, setError] = useState<string | null>(null)
   const [selectedDay, setSelectedDay] = useState<WorkoutDay | null>(null)
   const [selectedBlock, setSelectedBlock] = useState<Block | null>(null)
-  const [isPdfGenerating, setIsPdfGenerating] = useState(false)
-  const [showPdfPreview, setShowPdfPreview] = useState(false)
-  const pdfTemplateRef = useRef<HTMLDivElement>(null)
+  const [pdfReady, setPdfReady] = useState(false)
 
   useEffect(() => {
     async function fetchRutina() {
@@ -402,28 +400,6 @@ export default function WorkoutApp({ routineId }: { routineId: string }) {
     setSelectedBlock(block)
   }
 
-  const handleOpenPdfPreview = () => {
-    if (!data) return
-    setShowPdfPreview(true)
-  }
-
-  const handleDownloadPdf = async () => {
-    if (!pdfTemplateRef.current) return
-    
-    setIsPdfGenerating(true)
-    try {
-      await downloadPdf(pdfTemplateRef, data!.clientName, data!.routineTitle || 'Rutina')
-    } catch (err) {
-      console.error('Error generating PDF:', err)
-    } finally {
-      setIsPdfGenerating(false)
-    }
-  }
-
-  const handleClosePdfPreview = () => {
-    setShowPdfPreview(false)
-  }
-
   return (
     <div className="min-h-screen bg-gray-50 pb-8">
       <header className="bg-white shadow-sm sticky top-0 z-10">
@@ -456,23 +432,36 @@ export default function WorkoutApp({ routineId }: { routineId: string }) {
                   <span className="text-white/90 text-sm">{clientGoal}</span>
                 </div>
               </div>
-              <button
-                onClick={handleOpenPdfPreview}
-                disabled={isPdfGenerating}
-                className="flex-shrink-0 ml-3 p-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors"
-                title="Descargar PDF"
+              <PDFDownloadLink
+                document={
+                  <PdfDocument
+                    clientName={data.clientName}
+                    clientGoal={data.clientGoal || ''}
+                    coachName={data.coachName}
+                    routine={data.routine}
+                  />
+                }
+                fileName={`AthletiQ_${data.routineTitle || 'Rutina'}_${data.clientName.replace(/\s+/g, '_')}.pdf`}
               >
-                {isPdfGenerating ? (
-                  <svg className="w-5 h-5 text-white animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
-                ) : (
-                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
+                {({ loading }) => (
+                  <button
+                    disabled={loading}
+                    className="flex-shrink-0 ml-3 p-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors"
+                    title="Descargar PDF"
+                  >
+                    {loading ? (
+                      <svg className="w-5 h-5 text-white animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                    ) : (
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    )}
+                  </button>
                 )}
-              </button>
+              </PDFDownloadLink>
             </div>
           </div>
         </div>
@@ -534,61 +523,6 @@ export default function WorkoutApp({ routineId }: { routineId: string }) {
           blockIndex={selectedDay?.blocks.findIndex(b => b.id === selectedBlock.id) ?? 0}
           onClose={() => setSelectedBlock(null)} 
         />
-      )}
-
-      {showPdfPreview && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50">
-          <div className="relative bg-white w-full max-w-md mx-4 my-4 rounded-2xl overflow-hidden">
-            <div className="flex items-center justify-between p-4 border-b">
-              <h2 className="text-lg font-bold text-gray-800">Previsualización PDF</h2>
-              <button 
-                onClick={handleClosePdfPreview}
-                className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200"
-              >
-                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            
-            <div className="overflow-y-auto max-h-[60vh] bg-gray-100">
-              <div ref={pdfTemplateRef} className="bg-white mx-auto shadow-lg">
-                <PdfTemplate
-                  routineTitle={data?.routineTitle || ''}
-                  clientName={data?.clientName || ''}
-                  clientGoal={data?.clientGoal || ''}
-                  coachName={data?.coachName || ''}
-                  routine={data?.routine || []}
-                />
-              </div>
-            </div>
-            
-            <div className="p-4 border-t bg-gray-50">
-              <button
-                onClick={handleDownloadPdf}
-                disabled={isPdfGenerating}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors flex items-center justify-center gap-2"
-              >
-                {isPdfGenerating ? (
-                  <>
-                    <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                    </svg>
-                    Generando...
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    Descargar PDF
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
       )}
     </div>
   )
