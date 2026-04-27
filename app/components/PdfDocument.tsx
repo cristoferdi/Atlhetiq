@@ -1,27 +1,23 @@
 'use client'
 
-import { Document, Page, View, Text, Image, Link, StyleSheet, Font } from '@react-pdf/renderer'
+import { Document, Page, View, Text, Image, Link, StyleSheet } from '@react-pdf/renderer'
 import { WorkoutDay } from '../data/mockData'
-
-Font.register({
-  family: 'Helvetica',
-  fonts: [
-    { src: 'https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu4mxP.ttf', fontWeight: 'normal' },
-    { src: 'https://fonts.gstatic.com/s/roboto/v30/KFOlCnqEu92Fr1MmWUlfBBc9.ttf', fontWeight: 'bold' },
-  ],
-})
+import { getImageAsBase64 } from '../utils/imageUtils'
+import { useEffect, useState } from 'react'
 
 const styles = StyleSheet.create({
   page: {
     padding: 20,
     backgroundColor: '#FFFFFF',
-    fontFamily: 'Helvetica',
   },
   header: {
     borderBottomWidth: 3,
     borderBottomColor: '#000000',
     paddingBottom: 15,
     marginBottom: 20,
+  },
+  headerCover: {
+    marginBottom: 15,
   },
   title: {
     fontSize: 20,
@@ -49,15 +45,15 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     borderLeftWidth: 5,
     borderLeftColor: '#000000',
-    marginTop: 15,
     marginBottom: 12,
+    marginTop: 15,
   },
   blockCard: {
     borderWidth: 1,
     borderColor: '#EEEEEE',
     borderRadius: 6,
     padding: 12,
-    marginBottom: 12,
+    marginBottom: 10,
   },
   superserie: {
     borderLeftWidth: 5,
@@ -82,18 +78,19 @@ const styles = StyleSheet.create({
     flex: 1,
     borderWidth: 1,
     borderColor: '#E5E5E5',
-    padding: 4,
+    padding: 6,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   statsLabel: {
     fontSize: 7,
     color: '#64748B',
     textTransform: 'uppercase',
+    marginBottom: 2,
   },
   statsValue: {
     fontSize: 10,
     fontWeight: 'bold',
-    marginTop: 2,
   },
   indicationsBox: {
     backgroundColor: '#FEF3C7',
@@ -109,35 +106,25 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   exerciseItem: {
-    width: '48%',
-    display: 'flex',
-    flexDirection: 'column',
+    flex: 1,
+    minWidth: '45%',
   },
   exerciseItemFull: {
-    width: '100%',
-    display: 'flex',
-    flexDirection: 'column',
+    minWidth: '100%',
   },
   exerciseTitle: {
     fontSize: 9,
     fontWeight: 'bold',
     marginBottom: 4,
   },
-  imageContainer: {
-    width: '100%',
-    height: 150,
-    backgroundColor: '#F8FAFC',
-    borderRadius: 8,
-    overflow: 'hidden',
-    marginBottom: 6,
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
+  exerciseImageContainer: {
+    marginBottom: 4,
   },
   exerciseImage: {
     width: '100%',
-    height: '100%',
+    height: 100,
     objectFit: 'contain',
+    borderRadius: 4,
   },
   videoLink: {
     fontSize: 7,
@@ -153,37 +140,57 @@ const styles = StyleSheet.create({
     fontSize: 7,
     color: '#9CA3AF',
   },
-  noImage: {
-    width: '100%',
-    height: 150,
-    backgroundColor: '#F3F4F6',
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
+  overviewText: {
+    fontSize: 10,
+    color: '#64748B',
+    marginTop: 10,
   },
-  noImageText: {
-    fontSize: 8,
-    color: '#9CA3AF',
+  coverList: {
+    marginTop: 8,
+  },
+  coverListItem: {
+    fontSize: 9,
+    color: '#333333',
+    marginBottom: 4,
   },
 })
 
 interface ExerciseImageProps {
   gifUrl: string
   videoUrl?: string
-  imageMap: Record<string, string>
 }
 
-const ExerciseImage = ({ gifUrl, videoUrl, imageMap }: ExerciseImageProps) => {
-  const base64Image = imageMap[gifUrl]
+const ExerciseImage = ({ gifUrl, videoUrl }: ExerciseImageProps) => {
+  const [base64Image, setBase64Image] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let mounted = true
+
+    const loadImage = async () => {
+      setLoading(true)
+      const base64 = await getImageAsBase64(gifUrl)
+      if (mounted) {
+        setBase64Image(base64)
+        setLoading(false)
+      }
+    }
+
+    loadImage()
+
+    return () => {
+      mounted = false
+    }
+  }, [gifUrl])
 
   const imageContent = (
-    <View style={styles.imageContainer}>
-      {base64Image ? (
+    <View style={styles.exerciseImageContainer}>
+      {loading ? (
+        <Text style={{ fontSize: 8, color: '#9CA3AF' }}>Cargando...</Text>
+      ) : base64Image ? (
         <Image src={base64Image} style={styles.exerciseImage} />
       ) : (
-        <View style={styles.noImage}>
-          <Text style={styles.noImageText}>Sin imagen</Text>
-        </View>
+        <Text style={{ fontSize: 8, color: '#9CA3AF' }}>Sin imagen</Text>
       )}
     </View>
   )
@@ -203,14 +210,11 @@ const ExerciseImage = ({ gifUrl, videoUrl, imageMap }: ExerciseImageProps) => {
 interface BlockProps {
   block: any
   blockIndex: number
-  imageMap: Record<string, string>
 }
 
-const Block = ({ block, blockIndex, imageMap }: BlockProps) => {
+const Block = ({ block, blockIndex }: BlockProps) => {
   const isSuperserie = block._combined && block.sub_exercises.length > 1
   const letters = ['A', 'B', 'C', 'D', 'E', 'F']
-
-  const itemStyle = isSuperserie ? styles.exerciseItem : [styles.exerciseItem, styles.exerciseItemFull]
 
   return (
     <View style={[styles.blockCard, isSuperserie ? styles.superserie : styles.simple]}>
@@ -240,6 +244,7 @@ const Block = ({ block, blockIndex, imageMap }: BlockProps) => {
       <View style={styles.exercisesRow}>
         {block.sub_exercises.map((subExercise: any, subIndex: number) => {
           const prefix = isSuperserie ? `${blockIndex + 1}${letters[subIndex]}. ` : ''
+          const itemStyle = isSuperserie ? styles.exerciseItem : [styles.exerciseItem, styles.exerciseItemFull]
 
           return (
             <View 
@@ -252,7 +257,6 @@ const Block = ({ block, blockIndex, imageMap }: BlockProps) => {
               <ExerciseImage 
                 gifUrl={subExercise.gif_url} 
                 videoUrl={subExercise.video_url}
-                imageMap={imageMap}
               />
             </View>
           )
@@ -262,41 +266,93 @@ const Block = ({ block, blockIndex, imageMap }: BlockProps) => {
   )
 }
 
-interface DayContentProps {
+interface DayPageProps {
   day: WorkoutDay
   dayIndex: number
-  showHeader?: boolean
-  clientName?: string
-  clientGoal?: string
-  coachName?: string
-  imageMap: Record<string, string>
+  clientName: string
+  clientGoal: string
+  coachName: string
 }
 
-const DayContent = ({ day, dayIndex, showHeader, clientName, clientGoal, coachName, imageMap }: DayContentProps) => {
+const DayPage = ({ day, dayIndex, clientName, clientGoal, coachName }: DayPageProps) => {
   return (
-    <>
-      {showHeader && (
-        <View style={styles.header}>
-          <Text style={styles.title}>{clientName}</Text>
-          <View style={styles.headerGrid}>
-            <Text style={styles.headerItem}>
-              <Text style={styles.headerLabel}>OBJETIVO:</Text> {clientGoal}
-            </Text>
-            <Text style={styles.headerItem}>
-              <Text style={styles.headerLabel}>COACH:</Text> {coachName}
-            </Text>
-          </View>
+    <Page size="A4" style={styles.page} wrap={false}>
+      <View style={styles.header}>
+        <Text style={styles.title}>{day.day_name}</Text>
+        <View style={styles.headerGrid}>
+          <Text style={styles.headerItem}>
+            <Text style={styles.headerLabel}>CLIENTE:</Text> {clientName}
+          </Text>
+          <Text style={styles.headerItem}>
+            <Text style={styles.headerLabel}>OBJETIVO:</Text> {clientGoal}
+          </Text>
+          <Text style={styles.headerItem}>
+            <Text style={styles.headerLabel}>COACH:</Text> {coachName}
+          </Text>
         </View>
-      )}
-
-      <View style={styles.daySection}>
-        <Text>{day.day_name}</Text>
       </View>
 
       {day.blocks.map((block, blockIndex) => (
-        <Block key={block.id} block={block} blockIndex={blockIndex} imageMap={imageMap} />
+        <Block key={block.id} block={block} blockIndex={blockIndex} />
       ))}
-    </>
+
+      <Text 
+        style={styles.footer} 
+        render={({ pageNumber, totalPages }) => 
+          `Generado por Athletiq - Página ${pageNumber} de ${totalPages}`
+        } 
+        fixed 
+      />
+    </Page>
+  )
+}
+
+interface CoverPageProps {
+  clientName: string
+  clientGoal: string
+  coachName: string
+  routineTitle: string
+  routine: WorkoutDay[]
+}
+
+const CoverPage = ({ clientName, clientGoal, coachName, routineTitle, routine }: CoverPageProps) => {
+  return (
+    <Page size="A4" style={styles.page}>
+      <View style={styles.headerCover}>
+        <Text style={styles.title}>{routineTitle || 'Rutina de Ejercicios'}</Text>
+        <View style={styles.headerGrid}>
+          <Text style={styles.headerItem}>
+            <Text style={styles.headerLabel}>CLIENTE:</Text> {clientName}
+          </Text>
+          <Text style={styles.headerItem}>
+            <Text style={styles.headerLabel}>OBJETIVO:</Text> {clientGoal}
+          </Text>
+          <Text style={styles.headerItem}>
+            <Text style={styles.headerLabel}>COACH:</Text> {coachName}
+          </Text>
+        </View>
+      </View>
+
+      <Text style={styles.overviewText}>
+        Esta rutina contiene {routine.length} día{routine.length !== 1 ? 's' : ''}:
+      </Text>
+
+      <View style={styles.coverList}>
+        {routine.map((day, index) => (
+          <Text key={day.day_id} style={styles.coverListItem}>
+            • {day.day_name} ({day.blocks.length} bloque{day.blocks.length !== 1 ? 's' : ''})
+          </Text>
+        ))}
+      </View>
+
+      <Text 
+        style={styles.footer} 
+        render={({ pageNumber, totalPages }) => 
+          `Generado por Athletiq - Página ${pageNumber} de ${totalPages}`
+        } 
+        fixed 
+      />
+    </Page>
   )
 }
 
@@ -305,49 +361,30 @@ interface PdfDocumentProps {
   clientGoal: string
   coachName: string
   routine: WorkoutDay[]
-  imageMap: Record<string, string>
+  routineTitle?: string
 }
 
-const PdfDocument = ({ clientName, clientGoal, coachName, routine, imageMap }: PdfDocumentProps) => {
+const PdfDocument = ({ clientName, clientGoal, coachName, routine, routineTitle }: PdfDocumentProps) => {
   return (
     <Document>
-      <Page size="A4" style={styles.page}>
-        <DayContent 
-          day={routine[0]} 
-          dayIndex={0} 
-          showHeader={true}
+      <CoverPage 
+        clientName={clientName}
+        clientGoal={clientGoal}
+        coachName={coachName}
+        routineTitle={routineTitle || 'Rutina de Ejercicios'}
+        routine={routine}
+      />
+
+      {routine.map((day, dayIndex) => (
+        <DayPage 
+          key={day.day_id} 
+          day={day} 
+          dayIndex={dayIndex}
           clientName={clientName}
           clientGoal={clientGoal}
           coachName={coachName}
-          imageMap={imageMap}
         />
-
-        {routine.slice(1).map((day, dayIndex) => (
-          <Page key={day.day_id} size="A4" style={styles.page} wrap={false}>
-            <DayContent 
-              day={day} 
-              dayIndex={dayIndex + 1}
-              showHeader={false}
-              imageMap={imageMap}
-            />
-            <Text 
-              style={styles.footer} 
-              render={({ pageNumber, totalPages }) => 
-                `Generado por Athletiq - Página ${pageNumber} de ${totalPages}`
-              } 
-              fixed 
-            />
-          </Page>
-        ))}
-
-        <Text 
-          style={styles.footer} 
-          render={({ pageNumber, totalPages }) => 
-            `Generado por Athletiq - Página ${pageNumber} de ${totalPages}`
-          } 
-          fixed 
-        />
-      </Page>
+      ))}
     </Document>
   )
 }
