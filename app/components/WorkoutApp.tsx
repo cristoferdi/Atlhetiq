@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { getRutina } from '../../lib/firebase'
 import { Block, SubExercise, WorkoutDay } from '../data/mockData'
 import VideoEmbed, { VideoLink } from './VideoEmbed'
@@ -14,8 +14,20 @@ interface BlockCardProps {
 function BlockCard({ block, blockIndex, onClick }: BlockCardProps) {
   const isSuperserie = block._combined && block.sub_exercises.length > 1
   const letters = ['A', 'B', 'C', 'D', 'E', 'F']
+  const [currentSlide, setCurrentSlide] = useState(0)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
 
   const getExerciseLabel = (i: number) => `${blockIndex + 1}${letters[i]}.`
+
+  const handlePrev = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setCurrentSlide(prev => prev > 0 ? prev - 1 : block.sub_exercises.length - 1)
+  }
+
+  const handleNext = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setCurrentSlide(prev => prev < block.sub_exercises.length - 1 ? prev + 1 : 0)
+  }
 
   return (
     <button 
@@ -48,45 +60,67 @@ function BlockCard({ block, blockIndex, onClick }: BlockCardProps) {
           )}
         </div>
 
-        <div className="mb-3 relative">
+        <div className="mb-3 relative overflow-hidden rounded-xl">
           {isSuperserie ? (
-            <div className="relative w-full" style={{ paddingTop: '50%' }}>
-              {block.sub_exercises.slice(0, 2).map((sub, i) => (
-                <div
-                  key={i}
-                  className="absolute rounded-xl overflow-hidden border-2 border-white shadow-md"
-                  style={{
-                    width: i === 0 ? '60%' : '50%',
-                    height: '90%',
-                    top: i === 0 ? '0' : '25%',
-                    left: i === 0 ? '0' : '40%',
-                    zIndex: i === 0 ? 2 : 1,
-                  }}
-                >
-                  <img
-                    src={sub.gif_url}
-                    alt={sub.name}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement
-                      target.style.display = 'none'
-                    }}
-                  />
-                </div>
-              ))}
-              {block.sub_exercises.length > 2 && (
-                <div
-                  className="absolute rounded-full bg-gray-900/80 text-white text-xs font-bold flex items-center justify-center border-2 border-white"
-                  style={{
-                    width: '40px',
-                    height: '40px',
-                    bottom: '5%',
-                    right: '5%',
-                    zIndex: 3,
-                  }}
-                >
-                  +{block.sub_exercises.length - 2}
-                </div>
+            <div className="relative overflow-hidden" style={{ paddingTop: '100%' }}>
+              <div 
+                className="absolute inset-0 flex transition-transform duration-300 ease-out"
+                style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+              >
+                {block.sub_exercises.map((sub, i) => (
+                  <div 
+                    key={i}
+                    className="w-full h-full flex-shrink-0"
+                    style={{ perspective: '1000px' }}
+                  >
+                    <div className="w-full h-full transform-style-3d rotate-y-5">
+                      <img
+                        src={sub.gif_url}
+                        alt={sub.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement
+                          target.src = `https://via.placeholder.com/400x400/F3F4F6/9CA3AF?text=${encodeURIComponent(sub.name)}`
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {block.sub_exercises.length > 1 && (
+                <>
+                  <button
+                    onClick={handlePrev}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 shadow-lg flex items-center justify-center hover:bg-white transition-colors z-10"
+                  >
+                    <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={handleNext}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 shadow-lg flex items-center justify-center hover:bg-white transition-colors z-10"
+                  >
+                    <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
+                    {block.sub_exercises.map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setCurrentSlide(i)
+                        }}
+                        className={`w-2 h-2 rounded-full transition-colors ${
+                          i === currentSlide ? 'bg-blue-600' : 'bg-white/60'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </>
               )}
             </div>
           ) : (
@@ -118,6 +152,40 @@ function BlockCard({ block, blockIndex, onClick }: BlockCardProps) {
   )
 }
 
+interface CollapsibleSectionProps {
+  title: string
+  children: React.ReactNode
+  defaultOpen?: boolean
+}
+
+function CollapsibleSection({ title, children, defaultOpen = false }: CollapsibleSectionProps) {
+  const [isOpen, setIsOpen] = useState(defaultOpen)
+
+  return (
+    <div className="border rounded-lg overflow-hidden mb-3">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 transition-colors"
+      >
+        <span className="text-sm font-medium text-gray-700">{title}</span>
+        <svg 
+          className={`w-5 h-5 text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} 
+          fill="none" 
+          stroke="currentColor" 
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      {isOpen && (
+        <div className="p-3 bg-white">
+          {children}
+        </div>
+      )}
+    </div>
+  )
+}
+
 interface InstructionsModalProps {
   block: Block
   blockIndex: number
@@ -127,6 +195,9 @@ interface InstructionsModalProps {
 function InstructionsModal({ block, blockIndex, onClose }: InstructionsModalProps) {
   const isSuperserie = block._combined && block.sub_exercises.length > 1
   const letters = ['A', 'B', 'C', 'D', 'E', 'F']
+  const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0)
+
+  const currentExercise = block.sub_exercises[currentExerciseIndex]
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto">
@@ -163,38 +234,52 @@ function InstructionsModal({ block, blockIndex, onClose }: InstructionsModalProp
           </div>
 
           {block.indications && (
-            <div className="mb-6 p-3 bg-yellow-50 rounded-lg">
-              <p className="text-xs text-yellow-700 font-medium uppercase mb-1">Indicaciones</p>
+            <CollapsibleSection title="Indicaciones" defaultOpen={false}>
               <p className="text-sm text-gray-700 whitespace-pre-line">{block.indications}</p>
+            </CollapsibleSection>
+          )}
+
+          {isSuperserie && (
+            <div className="flex gap-2 overflow-x-auto mb-4 pb-2 scrollbar-hide">
+              {block.sub_exercises.map((sub, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrentExerciseIndex(i)}
+                  className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                    currentExerciseIndex === i
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  {blockIndex + 1}{letters[i]}. {sub.name.split(' ').slice(0, 2).join(' ')}
+                </button>
+              ))}
             </div>
           )}
 
-          <div className="border-t border-gray-200 my-4" />
-
-          <div className="space-y-6">
-            {block.sub_exercises.map((subExercise, index) => (
-              <div key={subExercise.exercise_id || index}>
-                <h3 className="text-lg font-bold text-gray-800 mb-3">
-                  {isSuperserie && `${blockIndex + 1}${letters[index]}. `}{subExercise.name}
-                </h3>
-                
+          {currentExercise && (
+            <>
+              <h3 className="text-lg font-bold text-gray-800 mb-3">
+                {isSuperserie && `${blockIndex + 1}${letters[currentExerciseIndex]}. `}{currentExercise.name}
+              </h3>
+              
+              <div className="mb-4">
+                <VideoEmbed 
+                  videoUrl={currentExercise.video_url} 
+                  mediaUrl={currentExercise.gif_url} 
+                  alt={currentExercise.name}
+                />
+              </div>
+              
+              {currentExercise.video_url && (
                 <div className="mb-4">
-                  <VideoEmbed 
-                    videoUrl={subExercise.video_url} 
-                    mediaUrl={subExercise.gif_url} 
-                    alt={subExercise.name}
-                  />
+                  <VideoLink videoUrl={currentExercise.video_url} />
                 </div>
-                
-                {subExercise.video_url && (
-                  <div className="mb-4">
-                    <VideoLink videoUrl={subExercise.video_url} />
-                  </div>
-                )}
+              )}
 
-                <h4 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">Instrucciones</h4>
-                <div className="space-y-3 pb-4">
-                  {subExercise.instructions && subExercise.instructions.map((instruction, i) => (
+              <CollapsibleSection title="Instrucciones" defaultOpen={false}>
+                <div className="space-y-3">
+                  {currentExercise.instructions && currentExercise.instructions.map((instruction, i) => (
                     <div key={i} className="flex gap-3">
                       <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 text-blue-600 text-sm font-medium flex items-center justify-center">
                         {i + 1}
@@ -202,17 +287,13 @@ function InstructionsModal({ block, blockIndex, onClose }: InstructionsModalProp
                       <p className="text-gray-600 text-sm leading-relaxed">{instruction}</p>
                     </div>
                   ))}
-                  {(!subExercise.instructions || subExercise.instructions.length === 0) && (
+                  {(!currentExercise.instructions || currentExercise.instructions.length === 0) && (
                     <p className="text-gray-400 text-sm">No hay instrucciones disponibles</p>
                   )}
                 </div>
-
-                {index < block.sub_exercises.length - 1 && (
-                  <div className="border-t border-gray-200 my-6" />
-                )}
-              </div>
-            ))}
-          </div>
+              </CollapsibleSection>
+            </>
+          )}
         </div>
       </div>
     </div>
