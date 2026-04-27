@@ -5,30 +5,37 @@ import { getRutina } from '../../lib/firebase'
 import { Block, SubExercise, WorkoutDay } from '../data/mockData'
 import VideoEmbed, { VideoLink } from './VideoEmbed'
 
-interface BlockProps {
+interface BlockCardProps {
   block: Block
-  index: number
-  onClick: (block: Block, subExercise: SubExercise) => void
+  blockIndex: number
+  onClick: (block: Block) => void
 }
 
-function BlockCard({ block, index, onClick }: BlockProps) {
-  const isSuperserie = block._combined
-  const firstSubExercise = block.sub_exercises[0]
+function BlockCard({ block, blockIndex, onClick }: BlockCardProps) {
+  const isSuperserie = block._combined && block.sub_exercises.length > 1
+  const letters = ['A', 'B', 'C', 'D', 'E', 'F']
+
+  const getExerciseLabel = (i: number) => `${blockIndex + 1}${letters[i]}.`
 
   return (
-    <div className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-4">
+    <button 
+      onClick={() => onClick(block)}
+      className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-4 text-left hover:shadow-md transition-shadow"
+    >
       <div className="p-4 pb-3">
         <div className="flex items-center gap-3 mb-3">
           <span className="w-7 h-7 rounded-full bg-blue-50 text-blue-600 text-sm font-semibold flex items-center justify-center">
-            {index + 1}
+            {blockIndex + 1}
           </span>
           <div className="flex-1">
-            <h3 className="text-lg font-semibold text-gray-800">{firstSubExercise.name}</h3>
-            {isSuperserie && block.sub_exercises.length > 1 && (
-              <div className="flex flex-wrap gap-1 mt-1">
-                {block.sub_exercises.slice(1).map((sub, i) => (
-                  <span key={i} className="text-xs text-gray-500">
-                    + {sub.name}
+            <h3 className="text-lg font-semibold text-gray-800">
+              {isSuperserie ? 'Superserie' : block.sub_exercises[0]?.name}
+            </h3>
+            {isSuperserie && (
+              <div className="flex flex-wrap gap-2 mt-1">
+                {block.sub_exercises.map((sub, i) => (
+                  <span key={i} className="text-xs text-gray-500 font-medium">
+                    {getExerciseLabel(i)} {sub.name}
                   </span>
                 ))}
               </div>
@@ -36,21 +43,63 @@ function BlockCard({ block, index, onClick }: BlockProps) {
           </div>
           {isSuperserie && (
             <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
-              Superserie
+              {block.sub_exercises.length} ejercicios
             </span>
           )}
         </div>
-        
-        <div className="mb-3">
-          <VideoEmbed 
-            videoUrl={firstSubExercise.video_url} 
-            mediaUrl={firstSubExercise.gif_url} 
-            alt={firstSubExercise.name}
-            showPlayButton={false}
-          />
+
+        <div className="mb-3 relative">
+          {isSuperserie ? (
+            <div className="relative w-full" style={{ paddingTop: '50%' }}>
+              {block.sub_exercises.slice(0, 2).map((sub, i) => (
+                <div
+                  key={i}
+                  className="absolute rounded-xl overflow-hidden border-2 border-white shadow-md"
+                  style={{
+                    width: i === 0 ? '60%' : '50%',
+                    height: '90%',
+                    top: i === 0 ? '0' : '25%',
+                    left: i === 0 ? '0' : '40%',
+                    zIndex: i === 0 ? 2 : 1,
+                  }}
+                >
+                  <img
+                    src={sub.gif_url}
+                    alt={sub.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement
+                      target.style.display = 'none'
+                    }}
+                  />
+                </div>
+              ))}
+              {block.sub_exercises.length > 2 && (
+                <div
+                  className="absolute rounded-full bg-gray-900/80 text-white text-xs font-bold flex items-center justify-center border-2 border-white"
+                  style={{
+                    width: '40px',
+                    height: '40px',
+                    bottom: '5%',
+                    right: '5%',
+                    zIndex: 3,
+                  }}
+                >
+                  +{block.sub_exercises.length - 2}
+                </div>
+              )}
+            </div>
+          ) : (
+            <VideoEmbed 
+              videoUrl={block.sub_exercises[0]?.video_url} 
+              mediaUrl={block.sub_exercises[0]?.gif_url} 
+              alt={block.sub_exercises[0]?.name || 'Ejercicio'}
+              showPlayButton={false}
+            />
+          )}
         </div>
         
-        <div className="flex gap-2 mb-2">
+        <div className="flex gap-2">
           <div className="flex-1 bg-blue-50 rounded-lg p-2 text-center">
             <p className="text-xs text-blue-600 font-medium uppercase">Series</p>
             <p className="text-lg font-bold text-blue-700">{block.series}</p>
@@ -64,45 +113,29 @@ function BlockCard({ block, index, onClick }: BlockProps) {
             <p className="text-lg font-bold text-amber-700">{block.rest_time}</p>
           </div>
         </div>
-
-        {block.indications && (
-          <div className="mt-3 p-3 bg-yellow-50 rounded-lg">
-            <p className="text-xs text-yellow-700 font-medium uppercase mb-1">Indicaciones</p>
-            <p className="text-sm text-gray-700 whitespace-pre-line">{block.indications}</p>
-          </div>
-        )}
-
-        {block.sub_exercises.length > 1 && (
-          <button
-            onClick={() => onClick(block, firstSubExercise)}
-            className="w-full mt-3 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
-          >
-            Ver {block.sub_exercises.length} ejercicios →
-          </button>
-        )}
       </div>
-    </div>
+    </button>
   )
 }
 
 interface InstructionsModalProps {
   block: Block
+  blockIndex: number
   onClose: () => void
 }
 
-function InstructionsModal({ block, onClose }: InstructionsModalProps) {
-  const [selectedSubExercise, setSelectedSubExercise] = useState<SubExercise | null>(
-    block.sub_exercises[0] || null
-  )
+function InstructionsModal({ block, blockIndex, onClose }: InstructionsModalProps) {
+  const isSuperserie = block._combined && block.sub_exercises.length > 1
+  const letters = ['A', 'B', 'C', 'D', 'E', 'F']
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white w-full max-w-md min-h-full overflow-hidden animate-slide-up pt-4 pb-8">
-        <div className="px-6">
+      <div className="relative bg-white w-full max-w-md min-h-full overflow-hidden animate-slide-up">
+        <div className="px-6 pt-4 pb-8">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold text-gray-800 flex-1 pr-2">
-              {block.sub_exercises.length > 1 ? 'Superserie' : selectedSubExercise?.name}
+              {isSuperserie ? 'Superserie' : block.sub_exercises[0]?.name}
             </h2>
             <button 
               onClick={onClose}
@@ -113,43 +146,6 @@ function InstructionsModal({ block, onClose }: InstructionsModalProps) {
               </svg>
             </button>
           </div>
-
-          {block._combined && block.sub_exercises.length > 1 && (
-            <div className="flex gap-2 overflow-x-auto mb-4 pb-2 scrollbar-hide">
-              {block.sub_exercises.map((sub, i) => (
-                <button
-                  key={i}
-                  onClick={() => setSelectedSubExercise(sub)}
-                  className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                    selectedSubExercise?.exercise_id === sub.exercise_id
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  Ejercicio {i + 1}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {selectedSubExercise && (
-            <>
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">{selectedSubExercise.name}</h3>
-                <VideoEmbed 
-                  videoUrl={selectedSubExercise.video_url} 
-                  mediaUrl={selectedSubExercise.gif_url} 
-                  alt={selectedSubExercise.name}
-                />
-              </div>
-              
-              {selectedSubExercise.video_url && (
-                <div className="mb-4">
-                  <VideoLink videoUrl={selectedSubExercise.video_url} />
-                </div>
-              )}
-            </>
-          )}
 
           <div className="flex gap-2 mb-4">
             <div className="flex-1 bg-blue-50 rounded-lg p-2 text-center">
@@ -167,30 +163,56 @@ function InstructionsModal({ block, onClose }: InstructionsModalProps) {
           </div>
 
           {block.indications && (
-            <div className="mb-4 p-3 bg-yellow-50 rounded-lg">
+            <div className="mb-6 p-3 bg-yellow-50 rounded-lg">
               <p className="text-xs text-yellow-700 font-medium uppercase mb-1">Indicaciones</p>
               <p className="text-sm text-gray-700 whitespace-pre-line">{block.indications}</p>
             </div>
           )}
 
-          {selectedSubExercise && (
-            <>
-              <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">Instrucciones</h3>
-              <div className="space-y-3 pb-4">
-                {selectedSubExercise.instructions && selectedSubExercise.instructions.map((instruction, index) => (
-                  <div key={index} className="flex gap-3">
-                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 text-blue-600 text-sm font-medium flex items-center justify-center">
-                      {index + 1}
-                    </span>
-                    <p className="text-gray-600 text-sm leading-relaxed">{instruction}</p>
+          <div className="border-t border-gray-200 my-4" />
+
+          <div className="space-y-6">
+            {block.sub_exercises.map((subExercise, index) => (
+              <div key={subExercise.exercise_id || index}>
+                <h3 className="text-lg font-bold text-gray-800 mb-3">
+                  {isSuperserie && `${blockIndex + 1}${letters[index]}. `}{subExercise.name}
+                </h3>
+                
+                <div className="mb-4">
+                  <VideoEmbed 
+                    videoUrl={subExercise.video_url} 
+                    mediaUrl={subExercise.gif_url} 
+                    alt={subExercise.name}
+                  />
+                </div>
+                
+                {subExercise.video_url && (
+                  <div className="mb-4">
+                    <VideoLink videoUrl={subExercise.video_url} />
                   </div>
-                ))}
-                {(!selectedSubExercise.instructions || selectedSubExercise.instructions.length === 0) && (
-                  <p className="text-gray-400 text-sm">No hay instrucciones disponibles</p>
+                )}
+
+                <h4 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">Instrucciones</h4>
+                <div className="space-y-3 pb-4">
+                  {subExercise.instructions && subExercise.instructions.map((instruction, i) => (
+                    <div key={i} className="flex gap-3">
+                      <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 text-blue-600 text-sm font-medium flex items-center justify-center">
+                        {i + 1}
+                      </span>
+                      <p className="text-gray-600 text-sm leading-relaxed">{instruction}</p>
+                    </div>
+                  ))}
+                  {(!subExercise.instructions || subExercise.instructions.length === 0) && (
+                    <p className="text-gray-400 text-sm">No hay instrucciones disponibles</p>
+                  )}
+                </div>
+
+                {index < block.sub_exercises.length - 1 && (
+                  <div className="border-t border-gray-200 my-6" />
                 )}
               </div>
-            </>
-          )}
+            ))}
+          </div>
         </div>
       </div>
     </div>
@@ -290,7 +312,7 @@ export default function WorkoutApp({ routineId }: { routineId: string }) {
 
   const { coachName, clientName, clientGoal, routine } = data
 
-  const handleBlockClick = (block: Block, subExercise: SubExercise) => {
+  const handleBlockClick = (block: Block) => {
     setSelectedBlock(block)
   }
 
@@ -362,7 +384,7 @@ export default function WorkoutApp({ routineId }: { routineId: string }) {
                 <BlockCard 
                   key={block.id} 
                   block={block} 
-                  index={index}
+                  blockIndex={index}
                   onClick={handleBlockClick}
                 />
               ))}
@@ -379,7 +401,8 @@ export default function WorkoutApp({ routineId }: { routineId: string }) {
 
       {selectedBlock && (
         <InstructionsModal 
-          block={selectedBlock} 
+          block={selectedBlock}
+          blockIndex={selectedDay?.blocks.findIndex(b => b.id === selectedBlock.id) ?? 0}
           onClose={() => setSelectedBlock(null)} 
         />
       )}
