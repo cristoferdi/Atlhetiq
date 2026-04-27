@@ -11,191 +11,168 @@ interface PdfTemplateProps {
 const letters = ['A', 'B', 'C', 'D', 'E', 'F']
 
 export default function PdfTemplate({ routineTitle, clientName, clientGoal, coachName, routine }: PdfTemplateProps) {
-  return (
-    <div className="pdf-container">
-      <style jsx>{`
-        .pdf-container {
-          font-family: Helvetica, Arial, sans-serif;
-          font-size: 10pt;
-          color: #333333;
-          background: #FFFFFF;
-          padding: 20mm;
-          width: 210mm;
-          min-height: 297mm;
-          box-sizing: border-box;
-        }
-        
-        @page {
-          size: A4;
-          margin: 20mm;
-        }
-        
-        .header {
-          border-bottom: 3px solid #000000;
-          padding-bottom: 15px;
-          margin-bottom: 20px;
-        }
-        
-        .header-title {
-          font-size: 24pt;
-          font-weight: bold;
-          text-transform: uppercase;
-          margin-bottom: 15px;
-        }
-        
-        .header-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr 1fr;
-          gap: 10px;
-        }
-        
-        .header-item {
-          font-size: 10pt;
-        }
-        
-        .header-label {
-          font-weight: bold;
-          color: #64748B;
-        }
-        
-        .day-section {
-          background: #F4F4F4;
-          padding: 10px;
-          font-size: 12pt;
-          font-weight: bold;
-          border-left: 5px solid #000000;
-          margin: 20px 0 15px 0;
-          page-break-after: avoid;
-        }
-        
-        .block-card {
-          border: 1px solid #EEEEEE;
-          border-radius: 8px;
-          padding: 15px;
-          margin-bottom: 15px;
-          page-break-inside: avoid;
-        }
-        
-        .block-card.superserie {
-          border-left: 5px solid #3B82F6;
-          background: #F8FAFC;
-        }
-        
-        .block-card.simple {
-          border-left: 5px solid #333333;
-          background: #FFFFFF;
-        }
-        
-        .block-title {
-          font-size: 11pt;
-          font-weight: bold;
-          margin-bottom: 10px;
-        }
-        
-        .stats-table {
-          width: 100%;
-          border-collapse: collapse;
-          margin-bottom: 10px;
-        }
-        
-        .stats-table td {
-          padding: 5px;
-          border: 1px solid #E5E5E5;
-          text-align: center;
-        }
-        
-        .stats-label {
-          font-size: 8pt;
-          text-transform: uppercase;
-          color: #64748B;
-        }
-        
-        .stats-value {
-          font-size: 11pt;
-          font-weight: bold;
-        }
-        
-        .indications-box {
-          background: #FEF3C7;
-          border: 1px solid #FDE68A;
-          color: #92400E;
-          padding: 10px;
-          margin-bottom: 10px;
-          font-size: 9pt;
-          white-space: pre-line;
-        }
-        
-        .exercises-grid {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 10px;
-        }
-        
-        .exercise-item {
-          flex: 1;
-          min-width: 45%;
-        }
-        
-        .exercise-item.full-width {
-          min-width: 100%;
-        }
-        
-        .exercise-title {
-          font-weight: bold;
-          font-size: 10pt;
-          margin-bottom: 5px;
-        }
-        
-        .exercise-image-container {
-          position: relative;
-          border-radius: 8px;
-          overflow: hidden;
-        }
-        
-        .exercise-image {
-          width: 100%;
-          height: 150px;
-          object-fit: cover;
-          display: block;
-        }
-        
-        .video-link {
-          display: block;
-          text-align: center;
-          padding: 8px;
-          font-size: 7pt;
-          color: #3B82F6;
-          text-decoration: none;
-        }
-        
-        .footer {
-          position: fixed;
-          bottom: 10px;
-          left: 0;
-          right: 0;
-          text-align: center;
-          font-size: 8pt;
-          color: #9CA3AF;
-        }
-      `}</style>
+  const containerStyle: React.CSSProperties = {
+    fontFamily: 'Helvetica, Arial, sans-serif',
+    fontSize: '10pt',
+    color: '#333333',
+    background: '#FFFFFF',
+    padding: '20mm',
+    width: '210mm',
+    minHeight: '297mm',
+    boxSizing: 'border-box',
+    position: 'absolute',
+    left: '-9999px',
+    top: '0',
+  }
 
-      <div className="header">
-        <div className="header-title">{routineTitle}</div>
-        <div className="header-grid">
-          <div className="header-item">
-            <span className="header-label">CLIENTE:</span> {clientName}
+  const headerStyle: React.CSSProperties = {
+    borderBottom: '3px solid #000000',
+    paddingBottom: '15px',
+    marginBottom: '20px',
+  }
+
+  const headerTitleStyle: React.CSSProperties = {
+    fontSize: '24pt',
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+    marginBottom: '15px',
+  }
+
+  const headerGridStyle: React.CSSProperties = {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr 1fr',
+    gap: '10px',
+  }
+
+  const headerLabelStyle: React.CSSProperties = {
+    fontWeight: 'bold',
+    color: '#64748B',
+  }
+
+  const daySectionStyle: React.CSSProperties = {
+    background: '#F4F4F4',
+    padding: '10px',
+    fontSize: '12pt',
+    fontWeight: 'bold',
+    borderLeft: '5px solid #000000',
+    margin: '20px 0 15px 0',
+    pageBreakAfter: 'avoid',
+  }
+
+  const getBlockCardStyle = (isSuperserie: boolean): React.CSSProperties => ({
+    border: '1px solid #EEEEEE',
+    borderRadius: '8px',
+    padding: '15px',
+    marginBottom: '15px',
+    pageBreakInside: 'avoid',
+    borderLeft: isSuperserie ? '5px solid #3B82F6' : '5px solid #333333',
+    background: isSuperserie ? '#F8FAFC' : '#FFFFFF',
+  })
+
+  const blockTitleStyle: React.CSSProperties = {
+    fontSize: '11pt',
+    fontWeight: 'bold',
+    marginBottom: '10px',
+  }
+
+  const statsTableStyle: React.CSSProperties = {
+    width: '100%',
+    borderCollapse: 'collapse',
+    marginBottom: '10px',
+  }
+
+  const statsCellStyle: React.CSSProperties = {
+    padding: '5px',
+    border: '1px solid #E5E5E5',
+    textAlign: 'center',
+  }
+
+  const statsLabelStyle: React.CSSProperties = {
+    fontSize: '8pt',
+    textTransform: 'uppercase',
+    color: '#64748B',
+  }
+
+  const statsValueStyle: React.CSSProperties = {
+    fontSize: '11pt',
+    fontWeight: 'bold',
+  }
+
+  const indicationsBoxStyle: React.CSSProperties = {
+    background: '#FEF3C7',
+    border: '1px solid #FDE68A',
+    color: '#92400E',
+    padding: '10px',
+    marginBottom: '10px',
+    fontSize: '9pt',
+    whiteSpace: 'pre-line',
+  }
+
+  const exercisesGridStyle: React.CSSProperties = {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '10px',
+  }
+
+  const exerciseItemStyle: React.CSSProperties = {
+    flex: '1',
+    minWidth: '45%',
+  }
+
+  const exerciseItemFullStyle: React.CSSProperties = {
+    flex: '1',
+    minWidth: '100%',
+  }
+
+  const exerciseTitleStyle: React.CSSProperties = {
+    fontWeight: 'bold',
+    fontSize: '10pt',
+    marginBottom: '5px',
+  }
+
+  const exerciseImageStyle: React.CSSProperties = {
+    width: '100%',
+    height: '150px',
+    objectFit: 'cover',
+    display: 'block',
+    borderRadius: '8px',
+  }
+
+  const videoLinkStyle: React.CSSProperties = {
+    display: 'block',
+    textAlign: 'center',
+    padding: '8px',
+    fontSize: '7pt',
+    color: '#3B82F6',
+    textDecoration: 'none',
+  }
+
+  const footerStyle: React.CSSProperties = {
+    marginTop: '20px',
+    textAlign: 'center',
+    fontSize: '8pt',
+    color: '#9CA3AF',
+  }
+
+  return (
+    <div style={containerStyle}>
+      <div style={headerStyle}>
+        <div style={headerTitleStyle}>{routineTitle}</div>
+        <div style={headerGridStyle}>
+          <div style={{ fontSize: '10pt' }}>
+            <span style={headerLabelStyle}>CLIENTE:</span> {clientName}
           </div>
-          <div className="header-item">
-            <span className="header-label">OBJETIVO:</span> {clientGoal}
+          <div style={{ fontSize: '10pt' }}>
+            <span style={headerLabelStyle}>OBJETIVO:</span> {clientGoal}
           </div>
-          <div className="header-item">
-            <span className="header-label">COACH:</span> {coachName}
+          <div style={{ fontSize: '10pt' }}>
+            <span style={headerLabelStyle}>COACH:</span> {coachName}
           </div>
         </div>
       </div>
 
-      {routine.map((day, dayIndex) => (
-        <div key={day.day_id} className="day-section">
+      {routine.map((day) => (
+        <div key={day.day_id} style={daySectionStyle}>
           {day.day_name}
         </div>
       ))}
@@ -207,38 +184,38 @@ export default function PdfTemplate({ routineTitle, clientName, clientGoal, coac
           return (
             <div 
               key={block.id} 
-              className={`block-card ${isSuperserie ? 'superserie' : 'simple'}`}
+              style={getBlockCardStyle(isSuperserie)}
             >
-              <div className="block-title">
+              <div style={blockTitleStyle}>
                 {blockIndex + 1}. {isSuperserie ? 'SUPERSERIE' : 'BLOQUE SIMPLE'}
               </div>
               
-              <table className="stats-table">
+              <table style={statsTableStyle}>
                 <tbody>
                   <tr>
-                    <td>
-                      <div className="stats-label">Series</div>
-                      <div className="stats-value">{block.series}</div>
+                    <td style={statsCellStyle}>
+                      <div style={statsLabelStyle}>Series</div>
+                      <div style={statsValueStyle}>{block.series}</div>
                     </td>
-                    <td>
-                      <div className="stats-label">Reps</div>
-                      <div className="stats-value">{block.reps}</div>
+                    <td style={statsCellStyle}>
+                      <div style={statsLabelStyle}>Reps</div>
+                      <div style={statsValueStyle}>{block.reps}</div>
                     </td>
-                    <td>
-                      <div className="stats-label">Descanso</div>
-                      <div className="stats-value">{block.rest_time}</div>
+                    <td style={statsCellStyle}>
+                      <div style={statsLabelStyle}>Descanso</div>
+                      <div style={statsValueStyle}>{block.rest_time}</div>
                     </td>
                   </tr>
                 </tbody>
               </table>
               
               {block.indications && (
-                <div className="indications-box">
+                <div style={indicationsBoxStyle}>
                   {block.indications}
                 </div>
               )}
               
-              <div className={`exercises-grid ${!isSuperserie ? 'single' : ''}`}>
+              <div style={exercisesGridStyle}>
                 {block.sub_exercises.map((subExercise, subIndex) => {
                   const prefix = isSuperserie 
                     ? `${blockIndex + 1}${letters[subIndex]}. ` 
@@ -248,30 +225,30 @@ export default function PdfTemplate({ routineTitle, clientName, clientGoal, coac
                   return (
                     <div 
                       key={subExercise.exercise_id || subIndex} 
-                      className={`exercise-item ${fullWidth ? 'full-width' : ''}`}
+                      style={fullWidth ? exerciseItemFullStyle : exerciseItemStyle}
                     >
-                      <div className="exercise-title">
+                      <div style={exerciseTitleStyle}>
                         {prefix}{subExercise.name}
                       </div>
-                      <div className="exercise-image-container">
+                      <div>
                         {subExercise.video_url ? (
                           <a href={subExercise.video_url} target="_blank" rel="noopener noreferrer">
                             <img 
                               src={subExercise.gif_url} 
                               alt={subExercise.name}
-                              className="exercise-image"
+                              style={exerciseImageStyle}
                             />
                           </a>
                         ) : (
                           <img 
                             src={subExercise.gif_url} 
                             alt={subExercise.name}
-                            className="exercise-image"
+                            style={exerciseImageStyle}
                           />
                         )}
                       </div>
                       {subExercise.video_url && (
-                        <a href={subExercise.video_url} target="_blank" rel="noopener noreferrer" className="video-link">
+                        <a href={subExercise.video_url} target="_blank" rel="noopener noreferrer" style={videoLinkStyle}>
                           ▶ Toca para ver video
                         </a>
                       )}
@@ -284,7 +261,7 @@ export default function PdfTemplate({ routineTitle, clientName, clientGoal, coac
         })
       )}
 
-      <div className="footer">
+      <div style={footerStyle}>
         Generado por Athletiq
       </div>
     </div>
