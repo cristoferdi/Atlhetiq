@@ -103,14 +103,17 @@ const styles = StyleSheet.create({
   },
   exercisesRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
     gap: 8,
   },
   exerciseItem: {
-    flex: 1,
-    minWidth: '45%',
+    width: '48%',
+    marginBottom: 15,
   },
   exerciseItemFull: {
-    minWidth: '100%',
+    width: '100%',
+    marginBottom: 15,
   },
   exerciseTitle: {
     fontSize: 9,
@@ -122,7 +125,7 @@ const styles = StyleSheet.create({
   },
   exerciseImage: {
     width: '100%',
-    height: 100,
+    height: 90,
     objectFit: 'contain',
     borderRadius: 4,
   },
