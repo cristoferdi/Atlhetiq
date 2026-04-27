@@ -109,25 +109,35 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   exerciseItem: {
-    flex: 1,
-    minWidth: '45%',
+    width: '48%',
+    display: 'flex',
+    flexDirection: 'column',
   },
   exerciseItemFull: {
-    minWidth: '100%',
+    width: '100%',
+    display: 'flex',
+    flexDirection: 'column',
   },
   exerciseTitle: {
     fontSize: 9,
     fontWeight: 'bold',
     marginBottom: 4,
   },
-  exerciseImageContainer: {
-    marginBottom: 4,
+  imageContainer: {
+    width: '100%',
+    height: 150,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 8,
+    overflow: 'hidden',
+    marginBottom: 6,
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   exerciseImage: {
     width: '100%',
-    height: 100,
-    objectFit: 'cover',
-    borderRadius: 4,
+    height: '100%',
+    objectFit: 'contain',
   },
   videoLink: {
     fontSize: 7,
@@ -145,9 +155,9 @@ const styles = StyleSheet.create({
   },
   noImage: {
     width: '100%',
-    height: 100,
+    height: 150,
     backgroundColor: '#F3F4F6',
-    borderRadius: 4,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -167,7 +177,7 @@ const ExerciseImage = ({ gifUrl, videoUrl, imageMap }: ExerciseImageProps) => {
   const base64Image = imageMap[gifUrl]
 
   const imageContent = (
-    <View style={styles.exerciseImageContainer}>
+    <View style={styles.imageContainer}>
       {base64Image ? (
         <Image src={base64Image} style={styles.exerciseImage} />
       ) : (
